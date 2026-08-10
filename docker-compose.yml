@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: webappsapb1_backend
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_DATABASE=${DB_DATABASE:-laravel}
+      - DB_USERNAME=${DB_USERNAME:-sail}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    depends_on:
+      - db
+    networks:
+      - webappsapb1_network
+
+  frontend:
+    image: node:22-alpine
+    container_name: webappsapb1_frontend
+    volumes:
+      - .:/var/www/html
+    working_dir: /var/www/html
+    ports:
+      - "5173:5173"
+    command: npm run dev -- --host
+    networks:
+      - webappsapb1_network
+
+  db:
+    image: postgres:15-alpine
+    container_name: webappsapb1_db
+    ports:
+      - "${FORWARD_DB_PORT:-5432}:5432"
+    environment:
+      - POSTGRES_DB=${DB_DATABASE:-laravel}
+      - POSTGRES_USER=${DB_USERNAME:-sail}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - webappsapb1_network
+
+networks:
+  webappsapb1_network:
+    driver: bridge
+
+volumes:
+  pgdata:
+    driver: local
