@@ -44,3 +44,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 ## 📜 Automated Changelog
 *This section is automatically updated with your latest Git commits.*
 
+- **2026-08-10 16:51**: docs: Update README with project summary and changelog
