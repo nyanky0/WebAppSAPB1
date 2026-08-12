@@ -1,8 +1,8 @@
 <x-guest-layout>
     <!-- Logos -->
-    <div class="flex flex-col items-center justify-center mb-6 space-y-4">
-        <img src="{{ asset('images/sap-logo.svg') }}" alt="SAP Logo" class="h-9 w-auto object-contain drop-shadow-md">
-        <img src="{{ asset('images/logo.png') }}" alt="SAP B1 AddOn Logo" class="w-28 h-28 object-contain drop-shadow-xl transform hover:scale-105 transition-transform duration-300">
+    <div class="flex flex-col items-center justify-center mb-4 space-y-2">
+        <img src="{{ asset('images/sap-logo.svg') }}" alt="SAP Logo" class="h-6 w-auto object-contain drop-shadow-md">
+        <img src="{{ asset('images/logo.png') }}" alt="SAP B1 AddOn Logo" class="w-16 h-16 object-contain drop-shadow-md transform hover:scale-105 transition-transform duration-300">
     </div>
 
     <!-- Login Form -->

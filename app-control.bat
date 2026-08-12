@@ -1,5 +1,5 @@
 @echo off
-title SAP B1 AddOn - Control Panel
+title SAP B1 AddOn - Control Panel (WSL / Docker)
 :menu
 cls
 echo ===================================================
@@ -29,9 +29,9 @@ goto menu
 
 :start_app
 cls
-echo Starting containers...
+echo Starting containers in WSL / Docker...
 cd /d "%~dp0"
-docker compose up -d
+wsl bash -c "cd \"$(wslpath '%~dp0')\" && (docker compose up -d || docker-compose up -d)" 2>nul || docker compose up -d
 echo.
 echo Application started! Access at http://localhost:8000
 pause
@@ -39,9 +39,9 @@ goto menu
 
 :stop_app
 cls
-echo Stopping containers...
+echo Stopping containers in WSL / Docker...
 cd /d "%~dp0"
-docker compose down
+wsl bash -c "cd \"$(wslpath '%~dp0')\" && (docker compose down || docker-compose down)" 2>nul || docker compose down
 echo.
 echo Application stopped successfully.
 pause
@@ -49,9 +49,9 @@ goto menu
 
 :restart_app
 cls
-echo Restarting containers...
+echo Restarting containers in WSL / Docker...
 cd /d "%~dp0"
-docker compose restart
+wsl bash -c "cd \"$(wslpath '%~dp0')\" && (docker compose restart || docker-compose restart)" 2>nul || docker compose restart
 echo.
 echo Application restarted successfully.
 pause
@@ -61,7 +61,7 @@ goto menu
 cls
 echo Container status:
 cd /d "%~dp0"
-docker compose ps
+wsl bash -c "cd \"$(wslpath '%~dp0')\" && (docker compose ps || docker-compose ps)" 2>nul || docker compose ps
 echo.
 pause
 goto menu
@@ -70,7 +70,7 @@ goto menu
 cls
 echo Press Ctrl+C to stop viewing logs...
 cd /d "%~dp0"
-docker compose logs -f backend
+wsl bash -c "cd \"$(wslpath '%~dp0')\" && (docker compose logs -f backend || docker-compose logs -f backend)" 2>nul || docker compose logs -f backend
 pause
 goto menu
 
