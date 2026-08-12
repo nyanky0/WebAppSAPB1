@@ -56,3 +56,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-08-12 11:47**: feat: add Item vs Service DocType, Dimensions & Cost Centers Master Data, Cost Center Line Integration, and fix Vendor selection JS
 - **2026-08-12 12:13**: feat: add all new master data pages to Roles & Access Control matrix and update Super Admin permissions
 - **2026-08-12 12:20**: fix: update SAP logo with new base64 image asset
+- **2026-08-12 12:22**: fix: restore working SVG vector SAP logo asset
