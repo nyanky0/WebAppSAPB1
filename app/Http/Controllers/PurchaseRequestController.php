@@ -35,7 +35,7 @@ class PurchaseRequestController extends Controller
         $uoms = \App\Models\Uom::all();
         $chartOfAccounts = \App\Models\ChartOfAccount::where('is_active', true)->where('account_type', 'Postable')->get();
         $dimensions = \App\Models\Dimension::where('is_active', true)->orderBy('dimension_code')->get();
-        $costCenters = \App\Models\CostCenter::where('is_active', true)->orderBy('center_code')->get();
+        $costCenters = \App\Models\CostCenter::where('is_active', true)->where('center_code', 'NOT ILIKE', 'Centr_z%')->orderBy('center_code')->get();
 
         return view('purchase-request.create', compact('taxes', 'warehouses', 'uoms', 'chartOfAccounts', 'dimensions', 'costCenters'));
     }

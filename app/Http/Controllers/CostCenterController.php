@@ -15,7 +15,7 @@ class CostCenterController extends Controller
 {
     public function index(Request $request)
     {
-        $query = CostCenter::query();
+        $query = CostCenter::query()->where('center_code', 'NOT ILIKE', 'Centr_z%');
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -75,9 +75,13 @@ class CostCenterController extends Controller
 
             if (isset($response['value']) && is_array($response['value'])) {
                 DB::beginTransaction();
+
+                // Clean up any existing system dummy cost centers (Centr_z%)
+                CostCenter::where('center_code', 'ILIKE', 'Centr_z%')->delete();
+
                 foreach ($response['value'] as $centerData) {
                     $code = $centerData['CenterCode'] ?? ($centerData['PrcCode'] ?? ($centerData['Code'] ?? null));
-                    if (!$code) continue;
+                    if (!$code || stripos($code, 'centr_z') === 0) continue;
 
                     $name = $centerData['CenterName'] ?? ($centerData['PrcName'] ?? ($centerData['Name'] ?? $code));
                     $dimCode = $centerData['InWhichDimension'] ?? ($centerData['Dimension'] ?? ($centerData['DimCode'] ?? 1));
