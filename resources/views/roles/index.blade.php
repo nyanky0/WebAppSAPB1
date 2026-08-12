@@ -191,6 +191,10 @@
                                                 <input type="checkbox" name="permissions[]" value="Purchase.PurchaseRequest" id="perm_purchase_pr" x-model="perms.purchase_pr" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
                                                 <label for="perm_purchase_pr" class="ml-2 block text-sm text-gray-700">Purchase Request</label>
                                             </div>
+                                            <div class="flex items-center">
+                                                <input type="checkbox" name="permissions[]" value="Purchase.PurchaseOrder" id="perm_purchase_po" x-model="perms.purchase_po" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="perm_purchase_po" class="ml-2 block text-sm text-gray-700">Purchase Order</label>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -236,7 +240,8 @@
                     master_bp: false,
                     scheduler_md: false,
                     scheduler_doc: false,
-                    purchase_pr: false
+                    purchase_pr: false,
+                    purchase_po: false
                 },
 
                 openAddModal() {
@@ -271,6 +276,7 @@
                     this.perms.scheduler_md = list.includes('Scheduler.MasterData');
                     this.perms.scheduler_doc = list.includes('Scheduler.Document');
                     this.perms.purchase_pr = list.includes('Purchase.PurchaseRequest');
+                    this.perms.purchase_po = list.includes('Purchase.PurchaseOrder');
 
                     this.showModal = true;
                 },
@@ -296,7 +302,8 @@
                         master_bp: false,
                         scheduler_md: false,
                         scheduler_doc: false,
-                        purchase_pr: false
+                        purchase_pr: false,
+                        purchase_po: false
                     };
                 },
 
@@ -334,10 +341,11 @@
                 },
 
                 get folderPurchase() {
-                    return this.perms.purchase_pr;
+                    return this.perms.purchase_pr && this.perms.purchase_po;
                 },
                 set folderPurchase(value) {
                     this.perms.purchase_pr = value;
+                    this.perms.purchase_po = value;
                 }
             }));
         });

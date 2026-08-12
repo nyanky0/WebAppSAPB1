@@ -40,6 +40,14 @@ class PurchaseRequestController extends Controller
         return view('purchase-request.create', compact('taxes', 'warehouses', 'uoms', 'chartOfAccounts', 'dimensions', 'costCenters'));
     }
 
+    public function show($id)
+    {
+        $purchaseRequest = PurchaseRequest::with(['lines', 'creator'])->findOrFail($id);
+        $targetPos = $purchaseRequest->targetPurchaseOrders();
+
+        return view('purchase-request.show', compact('purchaseRequest', 'targetPos'));
+    }
+
     public function getVendors()
     {
         try {
@@ -259,10 +267,30 @@ class PurchaseRequestController extends Controller
             }
 
             $pr->update([
+                'doc_entry' => $response['DocEntry'] ?? null,
+                'doc_num' => $response['DocNum'] ?? null,
+                'sap_number' => $response['DocNum'] ?? ($response['DocEntry'] ?? null),
                 'sync_status' => 'Synced',
                 'sap_status' => $response['DocumentStatus'] ?? 'Open',
                 'sync_error' => null
             ]);
+
+            // Save line_num for each line
+            if (isset($response['DocumentLines']) && is_array($response['DocumentLines'])) {
+                foreach ($response['DocumentLines'] as $sapLine) {
+                    if (isset($sapLine['LineNum'])) {
+                        $itemCode = $sapLine['ItemCode'] ?? null;
+                        $accCode = $sapLine['AccountCode'] ?? null;
+                        $prLine = $pr->lines()->where(function($q) use ($itemCode, $accCode) {
+                            if ($itemCode) $q->where('item_code', $itemCode);
+                            if ($accCode) $q->orWhere('account_code', $accCode);
+                        })->first();
+                        if ($prLine) {
+                            $prLine->update(['line_num' => (int) $sapLine['LineNum']]);
+                        }
+                    }
+                }
+            }
 
             SystemLog::logAction('sap', 'Synced Purchase Request', "PR #{$pr->id} successfully pushed to SAP.", true);
             SystemLog::logAction('scheduler', 'Processed PR Sync', "PR #{$pr->id} successfully pushed to SAP via Instant Sync.", true);

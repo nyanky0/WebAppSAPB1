@@ -184,7 +184,7 @@
             @endif
 
             <!-- Folder: Transaction -->
-            @if (in_array('Purchase.PurchaseRequest', $permissions))
+            @if (in_array('Purchase.PurchaseRequest', $permissions) || in_array('Purchase.PurchaseOrder', $permissions))
                 <div class="space-y-1 mt-1">
                     <button
                         @click="if (!sidebarOpen) { sidebarOpen = true; activeFolder = 'transaction'; } else { activeFolder = activeFolder === 'transaction' ? null : 'transaction'; }"
@@ -207,9 +207,14 @@
                         </svg>
                     </button>
                     <div x-show="activeFolder === 'transaction' && sidebarOpen" x-collapse class="space-y-1">
-                        <a href="{{ route('purchase-request.index') }}"
-                            class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Purchase
-                            Request</a>
+                        @if (in_array('Purchase.PurchaseRequest', $permissions))
+                            <a href="{{ route('purchase-request.index') }}"
+                                class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Purchase Request</a>
+                        @endif
+                        @if (in_array('Purchase.PurchaseOrder', $permissions))
+                            <a href="{{ route('purchase-order.index') }}"
+                                class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Purchase Order</a>
+                        @endif
                     </div>
                 </div>
             @endif

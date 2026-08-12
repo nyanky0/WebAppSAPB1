@@ -61,3 +61,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-08-12 12:33**: fix: prioritize DimensionDescription over DimensionName when syncing Dimensions from SAP
 - **2026-08-12 13:23**: fix: hide system dummy cost centers (Centr_z%) from Cost Centers list and Purchase Request dropdowns
 - **2026-08-12 13:32**: feat: default Taxes page to filter by Active taxes first, with options for Locked and All Statuses
+- **2026-08-12 13:41**: feat: add SAP Withholding Tax (WTax) Master Data module with sync, active/inactive filters, and role permissions

@@ -86,10 +86,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/purchase-request', [\App\Http\Controllers\PurchaseRequestController::class, 'index'])->name('purchase-request.index');
     Route::get('/purchase-request/create', [\App\Http\Controllers\PurchaseRequestController::class, 'create'])->name('purchase-request.create');
     Route::post('/purchase-request', [\App\Http\Controllers\PurchaseRequestController::class, 'store'])->name('purchase-request.store');
+    Route::get('/purchase-request/{id}', [\App\Http\Controllers\PurchaseRequestController::class, 'show'])->name('purchase-request.show');
     Route::get('/api/sap/vendors', [\App\Http\Controllers\PurchaseRequestController::class, 'getVendors'])->name('api.vendors');
     Route::get('/api/sap/items', [\App\Http\Controllers\PurchaseRequestController::class, 'getItems'])->name('api.items');
     Route::get('/api/sap/accounts', [\App\Http\Controllers\PurchaseRequestController::class, 'getAccounts'])->name('api.accounts');
     Route::get('/api/sap/series', [\App\Http\Controllers\PurchaseRequestController::class, 'getSeries'])->name('api.purchase-request.series');
+
+    Route::get('/purchase-order', [\App\Http\Controllers\PurchaseOrderController::class, 'index'])->name('purchase-order.index');
+    Route::get('/purchase-order/create', [\App\Http\Controllers\PurchaseOrderController::class, 'create'])->name('purchase-order.create');
+    Route::post('/purchase-order', [\App\Http\Controllers\PurchaseOrderController::class, 'store'])->name('purchase-order.store');
+    Route::get('/purchase-order/{id}', [\App\Http\Controllers\PurchaseOrderController::class, 'show'])->name('purchase-order.show');
+    Route::post('/purchase-order/{purchaseOrder}/sync', [\App\Http\Controllers\PurchaseOrderController::class, 'sync'])->name('purchase-order.sync');
 
     Route::get('/scheduler/master-data', [\App\Http\Controllers\SchedulerController::class, 'masterData'])->name('scheduler.master-data');
     Route::post('/scheduler/master-data/sync-all', [\App\Http\Controllers\SchedulerController::class, 'syncAllMasterData'])->name('scheduler.sync-all-master-data');

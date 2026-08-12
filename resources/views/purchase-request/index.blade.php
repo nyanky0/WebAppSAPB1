@@ -52,12 +52,15 @@
                                     <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Posting Date</th>
                                     <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Vendor</th>
                                     <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Requester</th>
+                                    <th class="px-3 py-3.5 text-center text-sm font-semibold text-gray-900">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 bg-white">
                                 @forelse($requests as $pr)
                                     <tr>
-                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">#{{ $pr->id }}</td>
+                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                                            <a href="{{ route('purchase-request.show', $pr->id) }}" class="text-indigo-600 font-bold hover:underline">#{{ $pr->doc_num ?? $pr->id }}</a>
+                                        </td>
                                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                             @if(($pr->doc_type ?? 'dssItem') === 'dssService')
                                                 <span class="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-semibold text-purple-700 ring-1 ring-inset ring-purple-600/20">Service</span>
@@ -84,10 +87,16 @@
                                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ \Carbon\Carbon::parse($pr->posting_date)->format('Y-m-d') }}</td>
                                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $pr->vendor }}</td>
                                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $pr->requester }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-center font-medium space-x-2">
+                                            <a href="{{ route('purchase-request.show', $pr->id) }}" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                            @if($pr->sync_status === 'Synced' && $pr->doc_entry)
+                                                <a href="{{ route('purchase-order.create', ['from_pr' => $pr->id]) }}" class="text-emerald-600 hover:text-emerald-900 font-semibold">Copy to PO</a>
+                                            @endif
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="py-4 text-center text-sm text-gray-500">No purchase requests match the selected filters.</td>
+                                        <td colspan="8" class="py-4 text-center text-sm text-gray-500">No purchase requests match the selected filters.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
