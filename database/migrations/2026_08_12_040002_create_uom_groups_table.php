@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('item_groups', function (Blueprint $table) {
+        Schema::create('uom_groups', function (Blueprint $table) {
             $table->id();
-            $table->integer('sap_number')->nullable();
+            $table->integer('abs_entry')->nullable();
+            $table->string('group_code')->unique();
             $table->string('group_name')->nullable();
-            $table->string('default_uom_group')->nullable();
-            $table->string('default_uom')->nullable();
+            $table->string('base_uom')->nullable();
+            $table->json('conversions')->nullable();
             $table->string('sync_status')->default('Draft');
             $table->string('sap_status')->nullable();
             $table->text('sync_error')->nullable();
@@ -29,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('item_groups');
+        Schema::dropIfExists('uom_groups');
     }
 };

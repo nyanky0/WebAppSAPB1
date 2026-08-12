@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('item_groups', function (Blueprint $table) {
+        Schema::create('bin_locations', function (Blueprint $table) {
             $table->id();
-            $table->integer('sap_number')->nullable();
-            $table->string('group_name')->nullable();
-            $table->string('default_uom_group')->nullable();
-            $table->string('default_uom')->nullable();
+            $table->integer('abs_entry')->nullable();
+            $table->string('bin_code')->nullable();
+            $table->string('whs_code')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->string('sync_status')->default('Draft');
             $table->string('sap_status')->nullable();
             $table->text('sync_error')->nullable();
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('item_groups');
+        Schema::dropIfExists('bin_locations');
     }
 };

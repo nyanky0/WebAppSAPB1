@@ -59,6 +59,19 @@
                             </div>
                         </div>
 
+                        <!-- Warehouse Header Selection -->
+                        <div class="sm:col-span-3">
+                            <label for="whs_code" class="block text-sm font-medium leading-6 text-gray-900">Warehouse</label>
+                            <div class="mt-2">
+                                <select name="whs_code" id="whs_code" x-model="formData.whs_code" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                    <option value="">Select a Warehouse (Optional)</option>
+                                    @foreach($warehouses as $whs)
+                                        <option value="{{ $whs->whs_code }}">{{ $whs->whs_code }} - {{ $whs->whs_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
                         <!-- Tax Code -->
                         <div class="sm:col-span-3">
                             <label for="tax_code" class="block text-sm font-medium leading-6 text-gray-900">Tax Code</label>
@@ -91,8 +104,9 @@
                                 <tr>
                                     <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Item Code</th>
                                     <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Description</th>
-                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 w-32">Quantity</th>
-                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 w-48">Unit Price</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 w-36">UoM</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 w-28">Quantity</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 w-36">Unit Price</th>
                                     <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Actions</th>
                                 </tr>
                             </thead>
@@ -101,11 +115,19 @@
                                     <tr>
                                         <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900">
                                             <input type="hidden" :name="`lines[${index}][item_code]`" :value="line.item_code">
-                                            <span x-text="line.item_code"></span>
+                                            <span x-text="line.item_code" class="font-mono font-semibold"></span>
                                         </td>
                                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                             <input type="hidden" :name="`lines[${index}][item_description]`" :value="line.item_description">
                                             <span x-text="line.item_description"></span>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            <select :name="`lines[${index}][uom_code]`" x-model="line.uom_code" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm">
+                                                <option value="">Manual / Blank</option>
+                                                @foreach($uoms as $uom)
+                                                    <option value="{{ $uom->code }}">{{ $uom->code }} ({{ $uom->name }})</option>
+                                                @endforeach
+                                            </select>
                                         </td>
                                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                             <input type="number" :name="`lines[${index}][quantity]`" x-model="line.quantity" min="0.01" step="0.01" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" required>
@@ -119,7 +141,7 @@
                                     </tr>
                                 </template>
                                 <tr x-show="formData.lines.length === 0">
-                                    <td colspan="5" class="py-4 text-center text-sm text-gray-500">No items added yet.</td>
+                                    <td colspan="6" class="py-4 text-center text-sm text-gray-500">No items added yet.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -151,7 +173,6 @@
              aria-modal="true" 
              style="display: none;">
             <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
-                <!-- Background overlay -->
                 <div x-show="isItemModalOpen" 
                      x-transition:enter="ease-out duration-300" 
                      x-transition:enter-start="opacity-0" 
@@ -162,7 +183,6 @@
                      class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" 
                      @click="isItemModalOpen = false"></div>
 
-                <!-- Modal Panel -->
                 <div x-show="isItemModalOpen" 
                      x-transition:enter="ease-out duration-300" 
                      x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
@@ -219,6 +239,7 @@
                     posting_date: today,
                     required_date: today,
                     vendor: '',
+                    whs_code: '',
                     tax_code: '',
                     lines: []
                 },
@@ -231,7 +252,8 @@
                     item_code: '',
                     item_description: '',
                     quantity: 1,
-                    price: 0
+                    price: 0,
+                    uom_code: ''
                 },
 
                 openVendorModal() {
@@ -239,7 +261,7 @@
                 },
 
                 openItemModal() {
-                    this.newItem = { item_code: '', item_description: '', quantity: 1, price: 0 };
+                    this.newItem = { item_code: '', item_description: '', quantity: 1, price: 0, uom_code: '' };
                     this.selectedItemCode = '';
                     this.isItemModalOpen = true;
                     if (this.availableItems.length === 0) {
@@ -266,9 +288,12 @@
                     if (item) {
                         this.newItem.item_code = item.ItemCode;
                         this.newItem.item_description = item.ItemName;
+                        // Auto resolve default UoM from SAP priority logic
+                        this.newItem.uom_code = item.ResolvedUom || '';
                     } else {
                         this.newItem.item_code = '';
                         this.newItem.item_description = '';
+                        this.newItem.uom_code = '';
                     }
                 },
 

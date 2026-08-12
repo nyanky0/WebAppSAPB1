@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('purchase_requests', function (Blueprint $table) {
             $table->id();
+            $table->integer('sap_number')->nullable();
             $table->string('sync_status')->default('Draft'); // Draft, Synced, Failed
             $table->string('sap_status')->nullable();
             $table->date('document_date')->nullable();
@@ -21,6 +22,7 @@ return new class extends Migration
             $table->date('required_date')->nullable();
             $table->string('requester')->nullable();
             $table->string('vendor')->nullable();
+            $table->string('whs_code')->nullable();
             $table->string('tax_code')->nullable();
             $table->text('sync_error')->nullable();
             $table->string('created_by')->nullable();

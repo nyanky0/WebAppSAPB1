@@ -31,7 +31,9 @@ class PurchaseRequestController extends Controller
     public function create()
     {
         $taxes = Tax::where('locked', false)->get();
-        return view('purchase-request.create', compact('taxes'));
+        $warehouses = \App\Models\Warehouse::where('is_active', true)->get();
+        $uoms = \App\Models\Uom::all();
+        return view('purchase-request.create', compact('taxes', 'warehouses', 'uoms'));
     }
 
     public function getVendors()
@@ -62,12 +64,26 @@ class PurchaseRequestController extends Controller
     public function getItems()
     {
         try {
+            $itemGroupsMap = \App\Models\ItemGroup::pluck('default_uom', 'group_name')->toArray();
+
             $items = \App\Models\Item::where('is_active', true)
                 ->get()
-                ->map(function($item) {
+                ->map(function($item) use ($itemGroupsMap) {
+                    $groupDefaultUom = $itemGroupsMap[$item->item_group] ?? null;
+                    
+                    // SAP Fallback order: Purchasing UoM -> Inventory UoM -> Item Group Default UoM
+                    $resolvedUom = $item->purchasing_uom ?: ($item->inventory_uom ?: ($item->uom ?: $groupDefaultUom));
+
                     return [
                         'ItemCode' => $item->item_code,
-                        'ItemName' => $item->item_name
+                        'ItemName' => $item->item_name,
+                        'PurchasingUom' => $item->purchasing_uom,
+                        'InventoryUom' => $item->inventory_uom ?: $item->uom,
+                        'SalesUom' => $item->sales_uom,
+                        'GroupDefaultUom' => $groupDefaultUom,
+                        'ResolvedUom' => $resolvedUom,
+                        'UomGroupType' => $item->uom_group_type ?? 'Manual',
+                        'UomGroup' => $item->uom_group,
                     ];
                 });
             
@@ -85,6 +101,7 @@ class PurchaseRequestController extends Controller
             'posting_date' => 'required|date',
             'required_date' => 'required|date',
             'vendor' => 'required|string',
+            'whs_code' => 'nullable|string',
             'tax_code' => 'required|string',
             'instant_sync' => 'nullable|boolean',
             'lines' => 'required|array|min:1',
@@ -92,6 +109,7 @@ class PurchaseRequestController extends Controller
             'lines.*.item_description' => 'nullable|string',
             'lines.*.quantity' => 'required|numeric|min:0.01',
             'lines.*.price' => 'nullable|numeric|min:0',
+            'lines.*.uom_code' => 'nullable|string',
         ]);
 
         try {
@@ -105,6 +123,7 @@ class PurchaseRequestController extends Controller
                 'required_date' => $validated['required_date'],
                 'requester' => auth()->user()->sap_user,
                 'vendor' => $validated['vendor'],
+                'whs_code' => $validated['whs_code'] ?? null,
                 'tax_code' => $validated['tax_code'],
                 'created_by' => auth()->user()->uid7,
             ]);
@@ -115,6 +134,7 @@ class PurchaseRequestController extends Controller
                     'item_description' => $line['item_description'] ?? null,
                     'quantity' => $line['quantity'],
                     'price' => $line['price'] ?? 0,
+                    'uom_code' => $line['uom_code'] ?? null,
                     'tax_code' => $validated['tax_code'],
                 ]);
             }
@@ -150,13 +170,23 @@ class PurchaseRequestController extends Controller
 
             $lines = [];
             foreach ($pr->lines as $line) {
-                $lines[] = [
+                $linePayload = [
                     'ItemCode' => $line->item_code,
                     'Quantity' => (float) $line->quantity,
                     'UnitPrice' => (float) $line->price,
                     'VatGroup' => $line->tax_code,
                     'LineVendor' => $pr->vendor
                 ];
+
+                if (!empty($pr->whs_code)) {
+                    $linePayload['WarehouseCode'] = $pr->whs_code;
+                }
+
+                if (!empty($line->uom_code)) {
+                    $linePayload['UoMCode'] = $line->uom_code;
+                }
+
+                $lines[] = $linePayload;
             }
 
             $payload = [

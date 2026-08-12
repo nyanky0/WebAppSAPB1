@@ -60,6 +60,19 @@ Route::middleware('auth')->group(function () {
     Route::post('/items', [\App\Http\Controllers\ItemController::class, 'store'])->name('items.store');
     Route::post('/items/sync', [\App\Http\Controllers\ItemController::class, 'sync'])->name('items.sync');
     Route::post('/items/{item}/push', [\App\Http\Controllers\ItemController::class, 'pushSingle'])->name('items.push');
+
+    Route::get('/uoms', [\App\Http\Controllers\UomController::class, 'index'])->name('uoms.index');
+    Route::get('/uoms/create', [\App\Http\Controllers\UomController::class, 'create'])->name('uoms.create');
+    Route::post('/uoms', [\App\Http\Controllers\UomController::class, 'store'])->name('uoms.store');
+    Route::post('/uoms/sync', [\App\Http\Controllers\UomController::class, 'sync'])->name('uoms.sync');
+
+    Route::get('/chart-of-accounts', [\App\Http\Controllers\ChartOfAccountController::class, 'index'])->name('chart-of-accounts.index');
+    Route::post('/chart-of-accounts/sync', [\App\Http\Controllers\ChartOfAccountController::class, 'sync'])->name('chart-of-accounts.sync');
+
+    Route::get('/warehouses', [\App\Http\Controllers\WarehouseController::class, 'index'])->name('warehouses.index');
+    Route::get('/warehouses/create', [\App\Http\Controllers\WarehouseController::class, 'create'])->name('warehouses.create');
+    Route::post('/warehouses', [\App\Http\Controllers\WarehouseController::class, 'store'])->name('warehouses.store');
+    Route::post('/warehouses/sync', [\App\Http\Controllers\WarehouseController::class, 'sync'])->name('warehouses.sync');
     
     Route::get('/purchase-request', [\App\Http\Controllers\PurchaseRequestController::class, 'index'])->name('purchase-request.index');
     Route::get('/purchase-request/create', [\App\Http\Controllers\PurchaseRequestController::class, 'create'])->name('purchase-request.create');

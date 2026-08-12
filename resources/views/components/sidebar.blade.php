@@ -103,6 +103,12 @@
                                 Groups</a>
                             <a href="{{ route('items.index') }}"
                                 class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Items</a>
+                            <a href="{{ route('uoms.index') }}"
+                                class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Units of Measure</a>
+                            <a href="{{ route('warehouses.index') }}"
+                                class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Warehouses & Bins</a>
+                            <a href="{{ route('chart-of-accounts.index') }}"
+                                class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Chart of Accounts</a>
                         @endif
                         @if (in_array('Administrator.Taxes', $permissions))
                             <a href="{{ route('taxes.index') }}"

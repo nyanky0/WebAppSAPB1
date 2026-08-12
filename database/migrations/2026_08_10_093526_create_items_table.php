@@ -16,6 +16,11 @@ return new class extends Migration
             $table->string('item_name')->nullable();
             $table->string('foreign_name')->nullable();
             $table->string('uom')->nullable();
+            $table->string('inventory_uom')->nullable();
+            $table->string('purchasing_uom')->nullable();
+            $table->string('sales_uom')->nullable();
+            $table->string('uom_group_type')->default('Manual');
+            $table->string('uom_group')->nullable();
             $table->string('item_group')->nullable();
             $table->boolean('is_active')->default(true);
             $table->string('sync_status')->default('Draft');

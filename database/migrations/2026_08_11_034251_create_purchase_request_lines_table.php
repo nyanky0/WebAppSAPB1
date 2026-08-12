@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('item_description')->nullable();
             $table->decimal('quantity', 19, 6)->default(1);
             $table->decimal('price', 19, 6)->default(0);
+            $table->string('uom_code')->nullable();
             $table->string('tax_code')->nullable();
             $table->timestamps();
         });
