@@ -74,7 +74,14 @@
             @endif
 
             <!-- Folder: SAP Master Data -->
-            @if (in_array('Administrator.Items', $permissions) || in_array('Administrator.Taxes', $permissions))
+            @if (in_array('Administrator.Items', $permissions) || 
+                 in_array('Administrator.Uoms', $permissions) || 
+                 in_array('Administrator.Warehouses', $permissions) || 
+                 in_array('Administrator.ChartOfAccounts', $permissions) || 
+                 in_array('Administrator.Dimensions', $permissions) || 
+                 in_array('Administrator.CostCenters', $permissions) || 
+                 in_array('Administrator.Taxes', $permissions) || 
+                 in_array('Administrator.BusinessPartners', $permissions))
                 <div class="space-y-1 mt-1">
                     <button
                         @click="if (!sidebarOpen) { sidebarOpen = true; activeFolder = 'master_data'; } else { activeFolder = activeFolder === 'master_data' ? null : 'master_data'; }"
@@ -99,27 +106,37 @@
                     <div x-show="activeFolder === 'master_data' && sidebarOpen" x-collapse class="space-y-1">
                         @if (in_array('Administrator.Items', $permissions))
                             <a href="{{ route('item-groups.index') }}"
-                                class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Item
-                                Groups</a>
+                                class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Item Groups</a>
                             <a href="{{ route('items.index') }}"
                                 class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Items</a>
+                        @endif
+                        @if (in_array('Administrator.Uoms', $permissions))
                             <a href="{{ route('uoms.index') }}"
                                 class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Units of Measure</a>
+                        @endif
+                        @if (in_array('Administrator.Warehouses', $permissions))
                             <a href="{{ route('warehouses.index') }}"
                                 class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Warehouses & Bins</a>
+                        @endif
+                        @if (in_array('Administrator.ChartOfAccounts', $permissions))
                             <a href="{{ route('chart-of-accounts.index') }}"
                                 class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Chart of Accounts</a>
+                        @endif
+                        @if (in_array('Administrator.Dimensions', $permissions))
                             <a href="{{ route('dimensions.index') }}"
                                 class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Dimensions</a>
+                        @endif
+                        @if (in_array('Administrator.CostCenters', $permissions))
                             <a href="{{ route('cost-centers.index') }}"
                                 class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Cost Centers</a>
                         @endif
                         @if (in_array('Administrator.Taxes', $permissions))
                             <a href="{{ route('taxes.index') }}"
                                 class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Taxes</a>
+                        @endif
+                        @if (in_array('Administrator.BusinessPartners', $permissions))
                             <a href="{{ route('business-partners.index') }}"
-                                class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Business
-                                Partners</a>
+                                class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Business Partners</a>
                         @endif
                     </div>
                 </div>
