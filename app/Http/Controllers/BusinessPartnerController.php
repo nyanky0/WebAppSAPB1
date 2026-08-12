@@ -49,8 +49,6 @@ class BusinessPartnerController extends Controller
             $bpsSynced = 0;
             $nextLink = '/BusinessPartners?$select=CardCode,CardName,CardType,ContactEmployees';
 
-            DB::beginTransaction();
-
             while ($nextLink) {
                 $path = $nextLink;
                 if (strpos($nextLink, 'http') === 0) {
@@ -61,63 +59,71 @@ class BusinessPartnerController extends Controller
                 
                 $path = ltrim($path, '/');
 
-                $response = $sap->get($user, $path);
+                try {
+                    $response = $sap->get($user, $path);
 
-                if (isset($response['value']) && is_array($response['value'])) {
-                    foreach ($response['value'] as $bpData) {
-                        if (!isset($bpData['CardCode'])) continue;
+                    if (isset($response['value']) && is_array($response['value'])) {
+                        DB::beginTransaction();
+                        foreach ($response['value'] as $bpData) {
+                            if (!isset($bpData['CardCode'])) continue;
 
-                        $type = 'Vendor';
-                        if (isset($bpData['CardType'])) {
-                            if ($bpData['CardType'] === 'cCustomer') {
-                                $type = 'Customer';
-                            }
-                        }
-
-                        $contactPersons = [];
-                        if (isset($bpData['ContactEmployees']) && is_array($bpData['ContactEmployees'])) {
-                            foreach ($bpData['ContactEmployees'] as $cp) {
-                                if (isset($cp['Name'])) {
-                                    $contactPersons[] = $cp['Name'];
+                            $type = 'Vendor';
+                            if (isset($bpData['CardType'])) {
+                                if ($bpData['CardType'] === 'cCustomer') {
+                                    $type = 'Customer';
                                 }
                             }
-                        }
 
-                        $localBp = BusinessPartner::where('bp_code', $bpData['CardCode'])->first();
-                        
-                        if ($localBp) {
-                            $localBp->update([
-                                'name' => $bpData['CardName'] ?? null,
-                                'type' => $type,
-                                'contact_persons' => $contactPersons,
-                                'sync_status' => 'Synced',
-                                'sap_status' => 'Created'
-                            ]);
-                        } else {
-                            BusinessPartner::create([
-                                'bp_code' => $bpData['CardCode'],
-                                'name' => $bpData['CardName'] ?? null,
-                                'type' => $type,
-                                'contact_persons' => $contactPersons,
-                                'sync_status' => 'Synced',
-                                'sap_status' => 'Created'
-                            ]);
+                            $contactPersons = [];
+                            if (isset($bpData['ContactEmployees']) && is_array($bpData['ContactEmployees'])) {
+                                foreach ($bpData['ContactEmployees'] as $cp) {
+                                    if (isset($cp['Name'])) {
+                                        $contactPersons[] = $cp['Name'];
+                                    }
+                                }
+                            }
+
+                            $localBp = BusinessPartner::where('bp_code', $bpData['CardCode'])->first();
+                            
+                            if ($localBp) {
+                                $localBp->update([
+                                    'name' => $bpData['CardName'] ?? null,
+                                    'type' => $type,
+                                    'contact_persons' => $contactPersons,
+                                    'sync_status' => 'Synced',
+                                    'sap_status' => 'Created'
+                                ]);
+                            } else {
+                                BusinessPartner::create([
+                                    'bp_code' => $bpData['CardCode'],
+                                    'name' => $bpData['CardName'] ?? null,
+                                    'type' => $type,
+                                    'contact_persons' => $contactPersons,
+                                    'sync_status' => 'Synced',
+                                    'sap_status' => 'Created'
+                                ]);
+                            }
+                            
+                            $bpsSynced++;
                         }
-                        
-                        $bpsSynced++;
+                        DB::commit();
                     }
-                }
 
-                if (isset($response['odata.nextLink'])) {
-                    $nextLink = $response['odata.nextLink'];
-                } else if (isset($response['@odata.nextLink'])) {
-                    $nextLink = $response['@odata.nextLink'];
-                } else {
-                    $nextLink = null;
+                    if (isset($response['odata.nextLink'])) {
+                        $nextLink = $response['odata.nextLink'];
+                    } else if (isset($response['@odata.nextLink'])) {
+                        $nextLink = $response['@odata.nextLink'];
+                    } else {
+                        $nextLink = null;
+                    }
+                } catch (\Exception $pageException) {
+                    if (DB::transactionLevel() > 0) {
+                        DB::rollBack();
+                    }
+                    Log::warning("BP sync page error at '{$path}': " . $pageException->getMessage());
+                    break;
                 }
             }
-
-            DB::commit();
 
             SystemLog::logAction('sap', 'Synced Business Partners', "Successfully synced {$bpsSynced} Business Partners from SAP.");
 

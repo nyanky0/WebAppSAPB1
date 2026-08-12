@@ -66,9 +66,7 @@ class ItemController extends Controller
             
             // 2. Fetch Items using Pagination Loop
             $itemsSynced = 0;
-            $nextLink = '/Items?$select=ItemCode,ItemName,ForeignName,InventoryUOM,ItemsGroupCode,Valid';
-            
-            DB::beginTransaction();
+            $nextLink = '/Items?$select=ItemCode,ItemName,ForeignName,InventoryUOM,ItemsGroupCode,Valid,PurchaseUnit,SalesUnit,UoMGroupEntry';
             
             try {
                 while ($nextLink) {
