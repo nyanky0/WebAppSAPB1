@@ -14,12 +14,19 @@ return new class extends Migration
         Schema::create('purchase_request_lines', function (Blueprint $table) {
             $table->id();
             $table->foreignId('purchase_request_id')->constrained()->onDelete('cascade');
-            $table->string('item_code');
+            $table->string('item_code')->nullable();
             $table->string('item_description')->nullable();
+            $table->string('account_code')->nullable();
+            $table->string('account_name')->nullable();
             $table->decimal('quantity', 19, 6)->default(1);
             $table->decimal('price', 19, 6)->default(0);
             $table->string('uom_code')->nullable();
             $table->string('tax_code')->nullable();
+            $table->string('costing_code')->nullable();
+            $table->string('costing_code2')->nullable();
+            $table->string('costing_code3')->nullable();
+            $table->string('costing_code4')->nullable();
+            $table->string('costing_code5')->nullable();
             $table->timestamps();
         });
     }

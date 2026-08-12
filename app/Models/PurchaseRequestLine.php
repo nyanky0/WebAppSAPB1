@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class PurchaseRequestLine extends Model
 {
     protected $fillable = [
-        'purchase_request_id', 'item_code', 'item_description', 'quantity', 'price', 'uom_code', 'tax_code'
+        'purchase_request_id', 'item_code', 'item_description', 'account_code', 'account_name', 
+        'quantity', 'price', 'uom_code', 'tax_code', 'costing_code', 'costing_code2', 'costing_code3', 
+        'costing_code4', 'costing_code5'
     ];
 
     public function purchaseRequest()

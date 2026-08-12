@@ -16,6 +16,7 @@ return new class extends Migration
             $table->integer('sap_number')->nullable();
             $table->string('sync_status')->default('Draft'); // Draft, Synced, Failed
             $table->string('sap_status')->nullable();
+            $table->string('doc_type')->default('dssItem'); // dssItem or dssService
             $table->date('document_date')->nullable();
             $table->date('valid_until')->nullable();
             $table->date('posting_date')->nullable();

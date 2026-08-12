@@ -73,12 +73,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/warehouses/create', [\App\Http\Controllers\WarehouseController::class, 'create'])->name('warehouses.create');
     Route::post('/warehouses', [\App\Http\Controllers\WarehouseController::class, 'store'])->name('warehouses.store');
     Route::post('/warehouses/sync', [\App\Http\Controllers\WarehouseController::class, 'sync'])->name('warehouses.sync');
+
+    Route::get('/dimensions', [\App\Http\Controllers\DimensionController::class, 'index'])->name('dimensions.index');
+    Route::post('/dimensions/sync', [\App\Http\Controllers\DimensionController::class, 'sync'])->name('dimensions.sync');
+
+    Route::get('/cost-centers', [\App\Http\Controllers\CostCenterController::class, 'index'])->name('cost-centers.index');
+    Route::post('/cost-centers/sync', [\App\Http\Controllers\CostCenterController::class, 'sync'])->name('cost-centers.sync');
     
     Route::get('/purchase-request', [\App\Http\Controllers\PurchaseRequestController::class, 'index'])->name('purchase-request.index');
     Route::get('/purchase-request/create', [\App\Http\Controllers\PurchaseRequestController::class, 'create'])->name('purchase-request.create');
     Route::post('/purchase-request', [\App\Http\Controllers\PurchaseRequestController::class, 'store'])->name('purchase-request.store');
     Route::get('/api/sap/vendors', [\App\Http\Controllers\PurchaseRequestController::class, 'getVendors'])->name('api.vendors');
     Route::get('/api/sap/items', [\App\Http\Controllers\PurchaseRequestController::class, 'getItems'])->name('api.items');
+    Route::get('/api/sap/accounts', [\App\Http\Controllers\PurchaseRequestController::class, 'getAccounts'])->name('api.accounts');
     Route::get('/api/sap/series', [\App\Http\Controllers\PurchaseRequestController::class, 'getSeries'])->name('api.purchase-request.series');
 
     Route::get('/scheduler/master-data', [\App\Http\Controllers\SchedulerController::class, 'masterData'])->name('scheduler.master-data');
