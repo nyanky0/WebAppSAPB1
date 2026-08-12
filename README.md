@@ -57,3 +57,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-08-12 12:13**: feat: add all new master data pages to Roles & Access Control matrix and update Super Admin permissions
 - **2026-08-12 12:20**: fix: update SAP logo with new base64 image asset
 - **2026-08-12 12:22**: fix: restore working SVG vector SAP logo asset
+- **2026-08-12 12:28**: fix: replace logo with official Wikimedia vector SAP 2011/2014 logo

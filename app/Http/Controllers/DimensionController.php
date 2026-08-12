@@ -62,7 +62,7 @@ class DimensionController extends Controller
                     Dimension::updateOrCreate(
                         ['dimension_code' => $code],
                         [
-                            'dimension_name' => $dimData['DimensionName'] ?? ($dimData['DimensionDescription'] ?? "Dimension {$code}"),
+                            'dimension_name' => !empty($dimData['DimensionDescription']) ? $dimData['DimensionDescription'] : ($dimData['DimensionName'] ?? "Dimension {$code}"),
                             'is_active' => ($dimData['IsActive'] ?? 'tYES') === 'tYES',
                             'sync_status' => 'Synced',
                             'sap_status' => 'Created',
