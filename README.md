@@ -47,3 +47,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-08-10 16:51**: docs: Update README with project summary and changelog
 - **2026-08-10 16:55**: chore: Add database backup
 - **2026-08-12 10:17**: feat: complete SAP B1 web app addon features, modal centering, layout alignment, item sync & scheduler sync-all
+- **2026-08-12 10:58**: feat: add UoM master data & conversions, Chart of Accounts, Warehouses & Bins, and PR UoM/Warehouse support
