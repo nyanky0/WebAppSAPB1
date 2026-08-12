@@ -31,9 +31,13 @@ class ItemController extends Controller
         $query->orderBy($sort, $direction);
         
         // Pagination
-        $items = $query->paginate(20)->withQueryString();
+        $perPage = (int) $request->get('per_page', 20);
+        if (!in_array($perPage, [20, 50, 100])) {
+            $perPage = 20;
+        }
+        $items = $query->paginate($perPage)->withQueryString();
         
-        return view('items.index', compact('items', 'sort', 'direction'));
+        return view('items.index', compact('items', 'sort', 'direction', 'perPage'));
     }
 
     public function sync(Request $request)

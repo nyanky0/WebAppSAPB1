@@ -51,3 +51,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-08-12 11:02**: refactor: clean up seeders to rely on live SAP sync for master data, refresh database dump
 - **2026-08-12 11:09**: fix: add popup loading modal to all master data sync buttons and make UoM/COA sync endpoint calls resilient
 - **2026-08-12 11:19**: fix: add max_retries config setting, page chunk transactions for COA/Items/Taxes, and extract default UoMs for Item Groups
+- **2026-08-12 11:25**: fix: remove leftover uncommitted outer DB::beginTransaction() in ItemController causing items to be rolled back

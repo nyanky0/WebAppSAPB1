@@ -35,11 +35,14 @@ class TaxController extends Controller
 
         $sortField = $request->get('sort', 'code');
         $sortDirection = $request->get('direction', 'asc');
-        $query->orderBy($sortField, $sortDirection);
+        $perPage = (int) $request->get('per_page', 20);
+        if (!in_array($perPage, [20, 50, 100])) {
+            $perPage = 20;
+        }
 
-        $taxes = $query->paginate(20)->withQueryString();
+        $taxes = $query->paginate($perPage)->withQueryString();
 
-        return view('taxes.index', compact('taxes', 'sortField', 'sortDirection'));
+        return view('taxes.index', compact('taxes', 'sortField', 'sortDirection', 'perPage'));
     }
 
     public function sync(Request $request)

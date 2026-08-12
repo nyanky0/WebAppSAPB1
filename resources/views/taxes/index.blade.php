@@ -63,6 +63,14 @@
                     </select>
                 </div>
 
+                <div>
+                    <select name="per_page" onchange="this.form.submit()" class="rounded-md border-0 py-2 pl-3 pr-8 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                        <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 per page</option>
+                        <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50 per page</option>
+                        <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100 per page</option>
+                    </select>
+                </div>
+
                 <input type="hidden" name="sort" value="{{ request('sort', 'code') }}">
                 <input type="hidden" name="direction" value="{{ request('direction', 'asc') }}">
                 <button type="submit" class="rounded-md bg-white px-3.5 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors">Search</button>

@@ -42,8 +42,8 @@
 
         <!-- Filter / Search -->
         <div class="mt-8">
-            <form method="GET" action="{{ route('business-partners.index') }}" class="flex gap-4">
-                <div class="flex-1 max-w-sm">
+            <form method="GET" action="{{ route('business-partners.index') }}" class="flex flex-wrap items-center gap-4">
+                <div class="flex-1 max-w-sm min-w-[240px]">
                     <div class="relative rounded-md shadow-sm">
                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                             <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -53,8 +53,15 @@
                         <input type="text" name="search" value="{{ request('search') }}" class="block w-full rounded-md border-0 py-2 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Search by Code or Name...">
                     </div>
                 </div>
+                <div>
+                    <select name="per_page" onchange="this.form.submit()" class="rounded-md border-0 py-2 pl-3 pr-8 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                        <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20 per page</option>
+                        <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50 per page</option>
+                        <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100 per page</option>
+                    </select>
+                </div>
                 <button type="submit" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Search</button>
-                @if(request()->has('search'))
+                @if(request()->has('search') || request()->has('per_page'))
                     <a href="{{ route('business-partners.index') }}" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-red-600 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Clear</a>
                 @endif
             </form>

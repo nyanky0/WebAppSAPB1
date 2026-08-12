@@ -35,9 +35,12 @@ class ChartOfAccountController extends Controller
 
         $sortField = $request->get('sort', 'code');
         $sortDirection = $request->get('direction', 'asc');
-        $query->orderBy($sortField, $sortDirection);
+        $perPage = (int) $request->get('per_page', 20);
+        if (!in_array($perPage, [20, 50, 100])) {
+            $perPage = 20;
+        }
 
-        $accounts = $query->paginate(20)->withQueryString();
+        $accounts = $query->paginate($perPage)->withQueryString();
 
         $categories = [
             'Assets', 

@@ -28,9 +28,14 @@ class BusinessPartnerController extends Controller
         $sortDirection = $request->get('direction', 'asc');
         $query->orderBy($sortField, $sortDirection);
 
-        $businessPartners = $query->paginate(20)->withQueryString();
+        $perPage = (int) $request->get('per_page', 20);
+        if (!in_array($perPage, [20, 50, 100])) {
+            $perPage = 20;
+        }
 
-        return view('business-partners.index', compact('businessPartners', 'sortField', 'sortDirection'));
+        $businessPartners = $query->paginate($perPage)->withQueryString();
+
+        return view('business-partners.index', compact('businessPartners', 'sortField', 'sortDirection', 'perPage'));
     }
 
     public function sync(Request $request)
