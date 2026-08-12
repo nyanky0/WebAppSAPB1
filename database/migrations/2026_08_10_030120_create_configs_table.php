@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('period_indicator')->nullable();
             $table->boolean('scheduler_active')->default(false);
             $table->integer('scheduler_interval')->default(5);
+            $table->integer('max_retries')->default(3);
             $table->timestamps();
         });
     }

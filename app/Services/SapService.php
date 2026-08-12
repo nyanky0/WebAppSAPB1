@@ -12,6 +12,8 @@ class SapService
     protected $baseUrl;
     protected $companyDb;
 
+    protected $maxRetries;
+
     public function __construct(Config $config = null)
     {
         $config = $config ?? Config::first();
@@ -20,6 +22,7 @@ class SapService
         }
         $this->baseUrl = rtrim($config->base_url, '/');
         $this->companyDb = $config->database;
+        $this->maxRetries = (int) ($config->max_retries ?? 3);
     }
 
     protected function logDebug($user, $method, $url, $body, $response)
@@ -29,8 +32,8 @@ class SapService
             'url' => $url,
             'database' => $this->companyDb,
             'body' => $body ? json_encode($body, JSON_PRETTY_PRINT) : null,
-            'response' => $response->body(),
-            'status' => $response->status()
+            'response' => $response ? $response->body() : null,
+            'status' => $response ? $response->status() : 500
         ];
         session()->push('sap_debug_logs', $log);
     }
@@ -41,7 +44,6 @@ class SapService
             throw new Exception("SAP credentials not configured for this user. Please update your profile.");
         }
 
-        // Cache session based on user ID to avoid logging in on every request (expires in 25 mins)
         $cacheKey = 'sap_session_' . $user->uid7;
 
         if (Cache::has($cacheKey)) {
@@ -51,93 +53,152 @@ class SapService
         $parsed = parse_url($this->baseUrl);
         $hostHeader = 'localhost' . (isset($parsed['port']) ? ':' . $parsed['port'] : '');
 
-        $response = Http::withoutVerifying()
-            ->withHeaders(['Host' => $hostHeader])
-            ->post("{$this->baseUrl}/Login", [
-                'UserName' => $user->sap_user,
-                'Password' => $user->sap_password,
-                'CompanyDB' => $this->companyDb,
-            ]);
+        $attempt = 0;
+        $maxRetries = max(1, $this->maxRetries);
 
-        if ($response->successful()) {
-            $sessionId = $response->json('SessionId');
-            Cache::put($cacheKey, $sessionId, now()->addMinutes(25));
-            return $sessionId;
+        while ($attempt < $maxRetries) {
+            $attempt++;
+            try {
+                $response = Http::withoutVerifying()
+                    ->withHeaders(['Host' => $hostHeader])
+                    ->post("{$this->baseUrl}/Login", [
+                        'UserName' => $user->sap_user,
+                        'Password' => $user->sap_password,
+                        'CompanyDB' => $this->companyDb,
+                    ]);
+
+                if ($response->successful()) {
+                    $sessionId = $response->json('SessionId');
+                    Cache::put($cacheKey, $sessionId, now()->addMinutes(25));
+                    return $sessionId;
+                }
+
+                if ($attempt < $maxRetries && $response->status() >= 500) {
+                    usleep(300000);
+                    continue;
+                }
+
+                throw new Exception("SAP Login Failed: " . $response->body());
+            } catch (Exception $e) {
+                if ($attempt < $maxRetries) {
+                    usleep(300000);
+                    continue;
+                }
+                throw $e;
+            }
         }
-
-        throw new Exception("SAP Login Failed: " . $response->body());
     }
 
     public function get($user, $endpoint)
     {
-        $sessionId = $this->login($user);
+        $attempt = 0;
+        $maxRetries = max(1, $this->maxRetries);
+        $lastException = null;
 
-        $parsed = parse_url($this->baseUrl);
-        $hostHeader = 'localhost' . (isset($parsed['port']) ? ':' . $parsed['port'] : '');
+        while ($attempt < $maxRetries) {
+            $attempt++;
+            try {
+                $sessionId = $this->login($user);
 
-        $response = Http::withoutVerifying()
-            ->withHeaders([
-                'Host' => $hostHeader,
-                'Cookie' => "B1SESSION=$sessionId"
-            ])
-            ->get("{$this->baseUrl}/$endpoint");
+                $parsed = parse_url($this->baseUrl);
+                $hostHeader = 'localhost' . (isset($parsed['port']) ? ':' . $parsed['port'] : '');
 
-        // Handle Session Timeout / Unauthorized
-        if ($response->status() === 401) {
-            Cache::forget('sap_session_' . $user->uid7);
-            $sessionId = $this->login($user);
-            
-            $response = Http::withoutVerifying()
-                ->withHeaders([
-                    'Host' => $hostHeader,
-                    'Cookie' => "B1SESSION=$sessionId"
-                ])
-                ->get("{$this->baseUrl}/$endpoint");
+                $response = Http::withoutVerifying()
+                    ->withHeaders([
+                        'Host' => $hostHeader,
+                        'Cookie' => "B1SESSION=$sessionId"
+                    ])
+                    ->get("{$this->baseUrl}/$endpoint");
+
+                if ($response->status() === 401) {
+                    Cache::forget('sap_session_' . $user->uid7);
+                    $sessionId = $this->login($user);
+                    
+                    $response = Http::withoutVerifying()
+                        ->withHeaders([
+                            'Host' => $hostHeader,
+                            'Cookie' => "B1SESSION=$sessionId"
+                        ])
+                        ->get("{$this->baseUrl}/$endpoint");
+                }
+
+                $this->logDebug($user, 'GET', "{$this->baseUrl}/$endpoint", null, $response);
+
+                if ($response->successful()) {
+                    return $response->json();
+                }
+
+                if ($response->status() >= 500 && $attempt < $maxRetries) {
+                    usleep(300000);
+                    continue;
+                }
+
+                throw new Exception("SAP Request Failed (Status {$response->status()}): " . $response->body());
+            } catch (Exception $e) {
+                $lastException = $e;
+                if ($attempt < $maxRetries) {
+                    usleep(300000);
+                    continue;
+                }
+                throw $lastException;
+            }
         }
-
-        $this->logDebug($user, 'GET', "{$this->baseUrl}/$endpoint", null, $response);
-
-        if ($response->successful()) {
-            return $response->json();
-        }
-
-        throw new Exception("SAP Request Failed: " . $response->body());
     }
 
     public function post($user, $endpoint, $data = [])
     {
-        $sessionId = $this->login($user);
+        $attempt = 0;
+        $maxRetries = max(1, $this->maxRetries);
+        $lastException = null;
 
-        $parsed = parse_url($this->baseUrl);
-        $hostHeader = 'localhost' . (isset($parsed['port']) ? ':' . $parsed['port'] : '');
+        while ($attempt < $maxRetries) {
+            $attempt++;
+            try {
+                $sessionId = $this->login($user);
 
-        $response = Http::withoutVerifying()
-            ->withHeaders([
-                'Host' => $hostHeader,
-                'Cookie' => "B1SESSION=$sessionId"
-            ])
-            ->post("{$this->baseUrl}/$endpoint", $data);
+                $parsed = parse_url($this->baseUrl);
+                $hostHeader = 'localhost' . (isset($parsed['port']) ? ':' . $parsed['port'] : '');
 
-        // Handle Session Timeout / Unauthorized
-        if ($response->status() === 401) {
-            Cache::forget('sap_session_' . $user->uid7);
-            $sessionId = $this->login($user);
-            
-            $response = Http::withoutVerifying()
-                ->withHeaders([
-                    'Host' => $hostHeader,
-                    'Cookie' => "B1SESSION=$sessionId"
-                ])
-                ->post("{$this->baseUrl}/$endpoint", $data);
+                $response = Http::withoutVerifying()
+                    ->withHeaders([
+                        'Host' => $hostHeader,
+                        'Cookie' => "B1SESSION=$sessionId"
+                    ])
+                    ->post("{$this->baseUrl}/$endpoint", $data);
+
+                if ($response->status() === 401) {
+                    Cache::forget('sap_session_' . $user->uid7);
+                    $sessionId = $this->login($user);
+                    
+                    $response = Http::withoutVerifying()
+                        ->withHeaders([
+                            'Host' => $hostHeader,
+                            'Cookie' => "B1SESSION=$sessionId"
+                        ])
+                        ->post("{$this->baseUrl}/$endpoint", $data);
+                }
+
+                $this->logDebug($user, 'POST', "{$this->baseUrl}/$endpoint", $data, $response);
+
+                if ($response->successful()) {
+                    return $response->json();
+                }
+
+                if ($response->status() >= 500 && $attempt < $maxRetries) {
+                    usleep(300000);
+                    continue;
+                }
+
+                throw new Exception("SAP Request Failed (Status {$response->status()}): " . $response->body());
+            } catch (Exception $e) {
+                $lastException = $e;
+                if ($attempt < $maxRetries) {
+                    usleep(300000);
+                    continue;
+                }
+                throw $lastException;
+            }
         }
-
-        $this->logDebug($user, 'POST', "{$this->baseUrl}/$endpoint", $data, $response);
-
-        if ($response->successful()) {
-            return $response->json();
-        }
-
-        throw new Exception("SAP Request Failed: " . $response->body());
     }
 
     public function getDatabases()

@@ -72,59 +72,68 @@ class ItemController extends Controller
             
             try {
                 while ($nextLink) {
-                    // Extract just the path + query since the nextLink might be a full URL from SAP
                     $path = $nextLink;
                     if (strpos($nextLink, 'http') === 0) {
                         $parsedUrl = parse_url($nextLink);
                         $path = $parsedUrl['path'] . (isset($parsedUrl['query']) ? '?' . $parsedUrl['query'] : '');
-                        // Strip /b1s/v1/ or /b1s/v2/ prefix to avoid double prefixes
                         $path = preg_replace('/^\/b1s\/v[12]\//', '/', $path);
                     }
                     
-                    // If the path doesn't start with a slash, make sure we format it correctly
                     $path = ltrim($path, '/');
 
-                    $response = $sap->get($user, $path);
-                    
-                    if (isset($response['value']) && is_array($response['value'])) {
-                        foreach ($response['value'] as $sapItem) {
-                            $itemGroupCode = $sapItem['ItemsGroupCode'] ?? null;
-                            $groupName = $itemGroups[$itemGroupCode] ?? $itemGroupCode;
-                            
-                            $isActive = true;
-                            if (isset($sapItem['Valid'])) {
-                                $isActive = ($sapItem['Valid'] === 'tYES' || $sapItem['Valid'] === 'Y');
+                    try {
+                        $response = $sap->get($user, $path);
+                        
+                        if (isset($response['value']) && is_array($response['value'])) {
+                            DB::beginTransaction();
+                            foreach ($response['value'] as $sapItem) {
+                                $itemGroupCode = $sapItem['ItemsGroupCode'] ?? null;
+                                $groupName = $itemGroups[$itemGroupCode] ?? $itemGroupCode;
+                                
+                                $isActive = true;
+                                if (isset($sapItem['Valid'])) {
+                                    $isActive = ($sapItem['Valid'] === 'tYES' || $sapItem['Valid'] === 'Y');
+                                }
+                                
+                                Item::updateOrCreate(
+                                    ['item_code' => $sapItem['ItemCode']],
+                                    [
+                                        'item_name' => $sapItem['ItemName'] ?? null,
+                                        'foreign_name' => $sapItem['ForeignName'] ?? null,
+                                        'uom' => $sapItem['InventoryUOM'] ?? null,
+                                        'inventory_uom' => $sapItem['InventoryUOM'] ?? null,
+                                        'purchasing_uom' => $sapItem['PurchaseUnit'] ?? null,
+                                        'sales_uom' => $sapItem['SalesUnit'] ?? null,
+                                        'uom_group_type' => ($sapItem['UoMGroupEntry'] ?? -1) == -1 ? 'Manual' : 'Group',
+                                        'uom_group' => $sapItem['UoMGroupEntry'] ?? null,
+                                        'item_group' => $groupName,
+                                        'is_active' => $isActive,
+                                        'sync_status' => 'Synced',
+                                        'sap_status' => 'Created',
+                                        'sync_error' => null
+                                    ]
+                                );
+                                
+                                $itemsSynced++;
                             }
-                            
-                            Item::updateOrCreate(
-                                ['item_code' => $sapItem['ItemCode']],
-                                [
-                                    'item_name' => $sapItem['ItemName'] ?? null,
-                                    'foreign_name' => $sapItem['ForeignName'] ?? null,
-                                    'uom' => $sapItem['InventoryUOM'] ?? null,
-                                    'item_group' => $groupName,
-                                    'is_active' => $isActive,
-                                    'sync_status' => 'Synced',
-                                    'sap_status' => 'Created',
-                                    'sync_error' => null
-                                ]
-                            );
-                            
-                            $itemsSynced++;
+                            DB::commit();
                         }
-                    }
-                    
-                    // Handle pagination
-                    if (isset($response['odata.nextLink'])) {
-                        $nextLink = $response['odata.nextLink'];
-                    } else if (isset($response['@odata.nextLink'])) {
-                        $nextLink = $response['@odata.nextLink'];
-                    } else {
-                        $nextLink = null;
+                        
+                        if (isset($response['odata.nextLink'])) {
+                            $nextLink = $response['odata.nextLink'];
+                        } else if (isset($response['@odata.nextLink'])) {
+                            $nextLink = $response['@odata.nextLink'];
+                        } else {
+                            $nextLink = null;
+                        }
+                    } catch (\Exception $pageException) {
+                        if (DB::transactionLevel() > 0) {
+                            DB::rollBack();
+                        }
+                        Log::warning("Item sync page error at '{$path}': " . $pageException->getMessage());
+                        break;
                     }
                 }
-                
-                DB::commit();
 
                 SystemLog::logAction('sap', 'Synced Items', "Successfully synced {$itemsSynced} items from SAP.");
                 

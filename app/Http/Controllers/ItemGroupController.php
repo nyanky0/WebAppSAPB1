@@ -49,9 +49,7 @@ class ItemGroupController extends Controller
             
             // Fetch ItemGroups using Pagination Loop
             $groupsSynced = 0;
-            $nextLink = '/ItemGroups?$select=Number,GroupName';
-            
-            DB::beginTransaction();
+            $nextLink = '/ItemGroups';
             
             try {
                 while ($nextLink) {
@@ -67,10 +65,14 @@ class ItemGroupController extends Controller
                     $response = $sap->get($user, $path);
                     
                     if (isset($response['value']) && is_array($response['value'])) {
+                        DB::beginTransaction();
                         foreach ($response['value'] as $sapGroup) {
                             if (!isset($sapGroup['Number'])) {
                                 continue;
                             }
+
+                            $defaultUomGroup = $sapGroup['DefaultUoMGroup'] ?? ($sapGroup['DefaultUniqGroup'] ?? 'Manual');
+                            $defaultUom = $sapGroup['DefaultUoM'] ?? ($sapGroup['DefaultUniq'] ?? null);
                             
                             $localGroup = ItemGroup::where('sap_number', $sapGroup['Number'])
                                 ->orWhere('group_name', $sapGroup['GroupName'])
@@ -79,6 +81,8 @@ class ItemGroupController extends Controller
                                 $localGroup->update([
                                     'sap_number' => $sapGroup['Number'],
                                     'group_name' => $sapGroup['GroupName'] ?? $localGroup->group_name,
+                                    'default_uom_group' => $defaultUomGroup,
+                                    'default_uom' => $defaultUom ?: $localGroup->default_uom,
                                     'sync_status' => 'Synced',
                                     'sap_status' => 'Created'
                                 ]);
@@ -86,6 +90,8 @@ class ItemGroupController extends Controller
                                 ItemGroup::create([
                                     'sap_number' => $sapGroup['Number'],
                                     'group_name' => $sapGroup['GroupName'] ?? null,
+                                    'default_uom_group' => $defaultUomGroup,
+                                    'default_uom' => $defaultUom,
                                     'sync_status' => 'Synced',
                                     'sap_status' => 'Created'
                                 ]);
@@ -93,6 +99,7 @@ class ItemGroupController extends Controller
                             
                             $groupsSynced++;
                         }
+                        DB::commit();
                     }
                     
                     if (isset($response['odata.nextLink'])) {

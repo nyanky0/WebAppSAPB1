@@ -92,6 +92,15 @@
                                     </div>
                                     <p class="mt-2 text-xs text-gray-500">The active period indicator for the current date, used to automatically select the correct document series.</p>
                                 </div>
+
+                                <!-- Maximum Service Layer Retries -->
+                                <div class="sm:col-span-2">
+                                    <label for="max_retries" class="block text-sm font-medium text-gray-700">Maximum Service Layer Retries</label>
+                                    <div class="mt-1">
+                                        <input type="number" name="max_retries" id="max_retries" value="{{ old('max_retries', $config->max_retries ?? 3) }}" min="1" max="10" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-lg bg-white/50 backdrop-blur-sm transition-colors focus:bg-white" required>
+                                    </div>
+                                    <p class="mt-2 text-xs text-gray-500">Number of automatic retries (default 3) when connection or 5xx server errors occur during SAP Service Layer communication.</p>
+                                </div>
                             </div>
 
                             <div class="pt-6">

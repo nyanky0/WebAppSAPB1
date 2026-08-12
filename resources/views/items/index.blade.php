@@ -33,7 +33,8 @@
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                             <h3 class="text-xl font-semibold text-gray-900 mb-2">Syncing Items...</h3>
-                            <p class="text-sm text-gray-500">Please wait while we fetch the latest items from SAP Service Layer. This might take a few moments depending on the amount of items.</p>
+                            <p class="text-sm text-gray-500">Please wait while we fetch the latest items from SAP Service Layer. Large datasets (>1000 items) are processed in chunks with auto-retry.</p>
+                            <p class="text-xs text-indigo-600 mt-2 font-medium">Auto-retry enabled (up to {{ \App\Models\Config::first()?->max_retries ?? 3 }} attempts on network/server errors)</p>
                         </div>
                     </div>
                 </div>

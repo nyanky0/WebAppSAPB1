@@ -68,8 +68,6 @@ class ChartOfAccountController extends Controller
             $accountsSynced = 0;
             $nextLink = '/ChartOfAccounts';
 
-            DB::beginTransaction();
-
             while ($nextLink) {
                 $path = $nextLink;
                 if (strpos($nextLink, 'http') === 0) {
@@ -80,63 +78,70 @@ class ChartOfAccountController extends Controller
                 
                 $path = ltrim($path, '/');
 
-                $response = $sap->get($user, $path);
+                try {
+                    $response = $sap->get($user, $path);
 
-                if (isset($response['value']) && is_array($response['value'])) {
-                    foreach ($response['value'] as $acctData) {
-                        $code = $acctData['Code'] ?? ($acctData['AcctCode'] ?? null);
-                        if (!$code) continue;
+                    if (isset($response['value']) && is_array($response['value'])) {
+                        DB::beginTransaction();
+                        foreach ($response['value'] as $acctData) {
+                            $code = $acctData['Code'] ?? ($acctData['AcctCode'] ?? null);
+                            if (!$code) continue;
 
-                        $postable = ($acctData['Postable'] ?? 'tYES') === 'tYES' ? 'Postable' : 'Title';
-                        $isControl = ($acctData['ControlAccount'] ?? 'tNO') === 'tYES';
-                        $isCash = ($acctData['CashAccount'] ?? 'tNO') === 'tYES';
-                        $isActive = ($acctData['ActiveAccount'] ?? 'tYES') === 'tYES';
+                            $postable = ($acctData['Postable'] ?? 'tYES') === 'tYES' ? 'Postable' : 'Title';
+                            $isControl = ($acctData['ControlAccount'] ?? 'tNO') === 'tYES';
+                            $isCash = ($acctData['CashAccount'] ?? 'tNO') === 'tYES';
+                            $isActive = ($acctData['ActiveAccount'] ?? 'tYES') === 'tYES';
 
-                        // Derive Category from GroupMask / Head Account Number (1..8)
-                        $groupMask = (int) ($acctData['GroupMask'] ?? 1);
-                        $categoryMap = [
-                            1 => 'Assets',
-                            2 => 'Liabilities',
-                            3 => 'Capital and Reserves',
-                            4 => 'Turnover',
-                            5 => 'Cost of Sales',
-                            6 => 'Operating Costs',
-                            7 => 'Non-Operating Income & Expenditure',
-                            8 => 'Taxation & Extraordinary Items'
-                        ];
-                        $category = $categoryMap[$groupMask] ?? 'Assets';
+                            $groupMask = (int) ($acctData['GroupMask'] ?? 1);
+                            $categoryMap = [
+                                1 => 'Assets',
+                                2 => 'Liabilities',
+                                3 => 'Capital and Reserves',
+                                4 => 'Turnover',
+                                5 => 'Cost of Sales',
+                                6 => 'Operating Costs',
+                                7 => 'Non-Operating Income & Expenditure',
+                                8 => 'Taxation & Extraordinary Items'
+                            ];
+                            $category = $categoryMap[$groupMask] ?? 'Assets';
 
-                        ChartOfAccount::updateOrCreate(
-                            ['code' => $code],
-                            [
-                                'name' => $acctData['Name'] ?? ($acctData['AcctName'] ?? null),
-                                'external_code' => $acctData['FormatCode'] ?? null,
-                                'currency' => $acctData['AcctCurrency'] ?? null,
-                                'levels' => $acctData['Levels'] ?? 1,
-                                'account_type' => $postable,
-                                'is_control_account' => $isControl,
-                                'is_cash_account' => $isCash,
-                                'is_active' => $isActive,
-                                'category' => $category,
-                                'sync_status' => 'Synced',
-                                'sap_status' => 'Created',
-                                'sync_error' => null
-                            ]
-                        );
-                        $accountsSynced++;
+                            ChartOfAccount::updateOrCreate(
+                                ['code' => $code],
+                                [
+                                    'name' => $acctData['Name'] ?? ($acctData['AcctName'] ?? null),
+                                    'external_code' => $acctData['FormatCode'] ?? null,
+                                    'currency' => $acctData['AcctCurrency'] ?? null,
+                                    'levels' => $acctData['Levels'] ?? 1,
+                                    'account_type' => $postable,
+                                    'is_control_account' => $isControl,
+                                    'is_cash_account' => $isCash,
+                                    'is_active' => $isActive,
+                                    'category' => $category,
+                                    'sync_status' => 'Synced',
+                                    'sap_status' => 'Created',
+                                    'sync_error' => null
+                                ]
+                            );
+                            $accountsSynced++;
+                        }
+                        DB::commit();
                     }
-                }
 
-                if (isset($response['odata.nextLink'])) {
-                    $nextLink = $response['odata.nextLink'];
-                } else if (isset($response['@odata.nextLink'])) {
-                    $nextLink = $response['@odata.nextLink'];
-                } else {
-                    $nextLink = null;
+                    if (isset($response['odata.nextLink'])) {
+                        $nextLink = $response['odata.nextLink'];
+                    } else if (isset($response['@odata.nextLink'])) {
+                        $nextLink = $response['@odata.nextLink'];
+                    } else {
+                        $nextLink = null;
+                    }
+                } catch (\Exception $pageException) {
+                    if (DB::transactionLevel() > 0) {
+                        DB::rollBack();
+                    }
+                    Log::warning("COA sync page error at '{$path}': " . $pageException->getMessage());
+                    break; // Finish with accounts synced up to this page
                 }
             }
-
-            DB::commit();
 
             SystemLog::logAction('sap', 'Synced Chart of Accounts', "Successfully synced {$accountsSynced} accounts from SAP.");
 

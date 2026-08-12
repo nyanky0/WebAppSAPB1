@@ -56,8 +56,6 @@ class TaxController extends Controller
             $taxesSynced = 0;
             $nextLink = '/VatGroups';
 
-            DB::beginTransaction();
-
             while ($nextLink) {
                 $path = $nextLink;
                 if (strpos($nextLink, 'http') === 0) {
@@ -68,54 +66,62 @@ class TaxController extends Controller
                 
                 $path = ltrim($path, '/');
 
-                $response = $sap->get($user, $path);
+                try {
+                    $response = $sap->get($user, $path);
 
-                if (isset($response['value']) && is_array($response['value'])) {
-                    foreach ($response['value'] as $taxData) {
-                        if (!isset($taxData['Code'])) {
-                            continue;
-                        }
+                    if (isset($response['value']) && is_array($response['value'])) {
+                        DB::beginTransaction();
+                        foreach ($response['value'] as $taxData) {
+                            if (!isset($taxData['Code'])) {
+                                continue;
+                            }
 
-                        $rate = 0;
-                        if (isset($taxData['VatGroups_Lines']) && is_array($taxData['VatGroups_Lines']) && count($taxData['VatGroups_Lines']) > 0) {
-                            $rate = $taxData['VatGroups_Lines'][0]['Rate'] ?? 0;
-                        }
+                            $rate = 0;
+                            if (isset($taxData['VatGroups_Lines']) && is_array($taxData['VatGroups_Lines']) && count($taxData['VatGroups_Lines']) > 0) {
+                                $rate = $taxData['VatGroups_Lines'][0]['Rate'] ?? 0;
+                            }
 
-                        $localTax = Tax::where('code', $taxData['Code'])->first();
-                        
-                        if ($localTax) {
-                            $localTax->update([
-                                'name' => $taxData['Name'] ?? null,
-                                'rate' => $rate,
-                                'locked' => ($taxData['Inactive'] ?? 'tNO') === 'tYES',
-                                'sync_status' => 'Synced',
-                                'sap_status' => 'Created'
-                            ]);
-                        } else {
-                            Tax::create([
-                                'code' => $taxData['Code'],
-                                'name' => $taxData['Name'] ?? null,
-                                'rate' => $rate,
-                                'locked' => ($taxData['Inactive'] ?? 'tNO') === 'tYES',
-                                'sync_status' => 'Synced',
-                                'sap_status' => 'Created'
-                            ]);
+                            $localTax = Tax::where('code', $taxData['Code'])->first();
+                            
+                            if ($localTax) {
+                                $localTax->update([
+                                    'name' => $taxData['Name'] ?? null,
+                                    'rate' => $rate,
+                                    'locked' => ($taxData['Inactive'] ?? 'tNO') === 'tYES',
+                                    'sync_status' => 'Synced',
+                                    'sap_status' => 'Created'
+                                ]);
+                            } else {
+                                Tax::create([
+                                    'code' => $taxData['Code'],
+                                    'name' => $taxData['Name'] ?? null,
+                                    'rate' => $rate,
+                                    'locked' => ($taxData['Inactive'] ?? 'tNO') === 'tYES',
+                                    'sync_status' => 'Synced',
+                                    'sap_status' => 'Created'
+                                ]);
+                            }
+                            
+                            $taxesSynced++;
                         }
-                        
-                        $taxesSynced++;
+                        DB::commit();
                     }
-                }
 
-                if (isset($response['odata.nextLink'])) {
-                    $nextLink = $response['odata.nextLink'];
-                } else if (isset($response['@odata.nextLink'])) {
-                    $nextLink = $response['@odata.nextLink'];
-                } else {
-                    $nextLink = null;
+                    if (isset($response['odata.nextLink'])) {
+                        $nextLink = $response['odata.nextLink'];
+                    } else if (isset($response['@odata.nextLink'])) {
+                        $nextLink = $response['@odata.nextLink'];
+                    } else {
+                        $nextLink = null;
+                    }
+                } catch (\Exception $pageException) {
+                    if (DB::transactionLevel() > 0) {
+                        DB::rollBack();
+                    }
+                    Log::warning("Tax sync page error at '{$path}': " . $pageException->getMessage());
+                    break;
                 }
             }
-
-            DB::commit();
 
             SystemLog::logAction('sap', 'Synced Taxes', "Successfully synced {$taxesSynced} taxes from SAP.");
 

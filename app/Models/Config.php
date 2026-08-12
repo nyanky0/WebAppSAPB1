@@ -12,5 +12,6 @@ class Config extends Model
         'period_indicator',
         'scheduler_active',
         'scheduler_interval',
+        'max_retries',
     ];
 }

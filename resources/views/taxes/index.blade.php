@@ -34,6 +34,7 @@
                             </svg>
                             <h3 class="text-xl font-semibold text-gray-900 mb-2">Syncing Taxes...</h3>
                             <p class="text-sm text-gray-500">Please wait while we fetch the latest Tax Codes from SAP Service Layer.</p>
+                            <p class="text-xs text-indigo-600 mt-2 font-medium">Auto-retry enabled (up to {{ \App\Models\Config::first()?->max_retries ?? 3 }} attempts on network/server errors)</p>
                         </div>
                     </div>
                 </div>

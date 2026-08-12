@@ -21,7 +21,8 @@ class ConfigController extends Controller
             'database' => 'required|string',
             'period_indicator' => 'nullable|string',
             'scheduler_active' => 'nullable|boolean',
-            'scheduler_interval' => 'nullable|integer|min:1'
+            'scheduler_interval' => 'nullable|integer|min:1',
+            'max_retries' => 'nullable|integer|min:1|max:10',
         ]);
 
         $config = Config::first() ?? new Config();
@@ -29,6 +30,7 @@ class ConfigController extends Controller
 
         $config->fill($request->only(['base_url', 'database', 'period_indicator']));
         $config->scheduler_interval = $request->filled('scheduler_interval') ? (int) $request->scheduler_interval : 5;
+        $config->max_retries = $request->filled('max_retries') ? (int) $request->max_retries : 3;
         $config->scheduler_active = $request->has('scheduler_active');
         $config->save();
 
