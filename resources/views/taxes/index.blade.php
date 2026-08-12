@@ -57,9 +57,9 @@
 
                 <div>
                     <select name="status" onchange="this.form.submit()" class="rounded-md border-0 py-2 pl-3 pr-8 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                        <option value="">All Statuses</option>
-                        <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
-                        <option value="locked" {{ request('status') === 'locked' ? 'selected' : '' }}>Locked</option>
+                        <option value="active" {{ request('status', 'active') === 'active' ? 'selected' : '' }}>Active Taxes</option>
+                        <option value="locked" {{ request('status') === 'locked' ? 'selected' : '' }}>Locked Taxes</option>
+                        <option value="all" {{ request('status') === 'all' ? 'selected' : '' }}>All Statuses</option>
                     </select>
                 </div>
 

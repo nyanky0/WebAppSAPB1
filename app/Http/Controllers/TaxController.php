@@ -25,12 +25,11 @@ class TaxController extends Controller
             });
         }
 
-        if ($request->filled('status')) {
-            if ($request->status === 'active') {
-                $query->where('locked', false);
-            } elseif ($request->status === 'locked') {
-                $query->where('locked', true);
-            }
+        $status = $request->get('status', 'active');
+        if ($status === 'active') {
+            $query->where('locked', false);
+        } elseif ($status === 'locked') {
+            $query->where('locked', true);
         }
 
         $sortField = $request->get('sort', 'code');
