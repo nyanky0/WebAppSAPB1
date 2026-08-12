@@ -26,6 +26,7 @@ class RoleSeeder extends Seeder
                 'Administrator.Dimensions',
                 'Administrator.CostCenters',
                 'Administrator.Taxes',
+                'Administrator.WithholdingTaxes',
                 'Administrator.BusinessPartners',
                 'Purchase.PurchaseRequest',
                 'Scheduler.MasterData',

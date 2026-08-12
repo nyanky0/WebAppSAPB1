@@ -81,6 +81,7 @@
                  in_array('Administrator.Dimensions', $permissions) || 
                  in_array('Administrator.CostCenters', $permissions) || 
                  in_array('Administrator.Taxes', $permissions) || 
+                 in_array('Administrator.WithholdingTaxes', $permissions) || 
                  in_array('Administrator.BusinessPartners', $permissions))
                 <div class="space-y-1 mt-1">
                     <button
@@ -133,6 +134,10 @@
                         @if (in_array('Administrator.Taxes', $permissions))
                             <a href="{{ route('taxes.index') }}"
                                 class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Taxes</a>
+                        @endif
+                        @if (in_array('Administrator.WithholdingTaxes', $permissions))
+                            <a href="{{ route('withholding-taxes.index') }}"
+                                class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Withholding Taxes</a>
                         @endif
                         @if (in_array('Administrator.BusinessPartners', $permissions))
                             <a href="{{ route('business-partners.index') }}"

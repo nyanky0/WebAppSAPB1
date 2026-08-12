@@ -60,3 +60,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-08-12 12:28**: fix: replace logo with official Wikimedia vector SAP 2011/2014 logo
 - **2026-08-12 12:33**: fix: prioritize DimensionDescription over DimensionName when syncing Dimensions from SAP
 - **2026-08-12 13:23**: fix: hide system dummy cost centers (Centr_z%) from Cost Centers list and Purchase Request dropdowns
+- **2026-08-12 13:32**: feat: default Taxes page to filter by Active taxes first, with options for Locked and All Statuses
