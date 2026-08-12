@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Config;
+use App\Models\SystemLog;
 
 class ConfigController extends Controller
 {
@@ -18,35 +19,79 @@ class ConfigController extends Controller
         $request->validate([
             'base_url' => 'required|url',
             'database' => 'required|string',
-            'period_indicator' => 'nullable|string'
+            'period_indicator' => 'nullable|string',
+            'scheduler_active' => 'nullable|boolean',
+            'scheduler_interval' => 'nullable|integer|min:1'
         ]);
 
         $config = Config::first() ?? new Config();
-        $config->base_url = $request->base_url;
-        $config->database = $request->database;
-        $config->period_indicator = $request->period_indicator;
+        $oldDatabase = $config->database;
+
+        $config->fill($request->only(['base_url', 'database', 'period_indicator']));
+        $config->scheduler_interval = $request->filled('scheduler_interval') ? (int) $request->scheduler_interval : 5;
+        $config->scheduler_active = $request->has('scheduler_active');
         $config->save();
+
+        if ($oldDatabase && $oldDatabase !== $request->database) {
+            \App\Models\Item::where('sync_status', '!=', 'Draft')->delete();
+            \App\Models\ItemGroup::where('sync_status', '!=', 'Draft')->delete();
+            \App\Models\Tax::where('sync_status', '!=', 'Draft')->delete();
+            \App\Models\BusinessPartner::where('sync_status', '!=', 'Draft')->delete();
+            SystemLog::logAction('system', 'Database Changed', "SAP Company database changed to {$request->database}. All synced Master Data was purged.");
+        }
+
+        SystemLog::logAction('admin', 'Update Configuration', [
+            'base_url' => $request->base_url,
+            'database' => $request->database,
+            'period_indicator' => $request->period_indicator
+        ]);
 
         return back()->with('success', 'Configuration updated successfully.');
     }
 
+    public function updatePersonal(Request $request)
+    {
+        $user = auth()->user();
+        
+        $user->debug_mode = $request->has('debug_mode');
+        $user->save();
+        
+        return back()->with('success', 'Personal settings updated successfully.');
+    }
+
     public function fetchPeriodIndicator(\Illuminate\Http\Request $request)
     {
+        $debugLogs = [];
         try {
-            $request->validate([
-                'base_url' => 'required|url',
-                'database' => 'required|string',
-            ]);
+            $baseUrl = trim($request->input('base_url', ''));
+            $database = trim($request->input('database', ''));
 
+            // Fallback to saved config if not supplied
+            if (empty($baseUrl) || empty($database)) {
+                $savedConfig = Config::first();
+                $baseUrl = $baseUrl ?: $savedConfig?->base_url;
+                $database = $database ?: $savedConfig?->database;
+            }
+
+            if (empty($baseUrl) || empty($database)) {
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'Please fill in both Base URL and Database Name text boxes first.',
+                    'debug_logs' => []
+                ], 422);
+            }
+
+            // Create temporary config directly from text box inputs
             $tempConfig = new Config([
-                'base_url' => $request->base_url,
-                'database' => $request->database,
+                'base_url' => $baseUrl,
+                'database' => $database,
             ]);
             $sap = new \App\Services\SapService($tempConfig);
-            
             $user = auth()->user();
-            
-            // 1. Try to create the SQL query. If it exists (-2035), catch the exception and proceed.
+
+            $indicators = [];
+
+            // 1. Try fetching via SQLQueries ('GetActivePeriod3')
             try {
                 $sap->post($user, "SQLQueries", [
                     "SqlCode" => "GetActivePeriod3",
@@ -54,21 +99,79 @@ class ConfigController extends Controller
                     "SqlText" => "SELECT T0.[Indicator] FROM OFPR T0 WHERE T0.[F_RefDate] <= :CurrentDate AND T0.[T_RefDate] >= :CurrentDate ORDER BY T0.[AbsEntry] DESC"
                 ]);
             } catch (\Exception $e) {
-                // Ignore the error, it's likely -2035 already exists
+                // Ignore if exists (-2035)
             }
 
-            // 2. Fetch the indicator using the query and today's date
             $today = now()->format('Y-m-d');
-            $data = $sap->get($user, "SQLQueries('GetActivePeriod3')/List?CurrentDate='{$today}'");
-            
-            if (isset($data['value']) && count($data['value']) > 0) {
-                return response()->json(['success' => true, 'indicators' => $data['value']]);
+            try {
+                $data = $sap->get($user, "SQLQueries('GetActivePeriod3')/List?CurrentDate='{$today}'");
+                if (isset($data['value']) && is_array($data['value'])) {
+                    $indicators = $data['value'];
+                }
+            } catch (\Exception $e) {
+                // Ignore and try fallback
             }
-            
-            return response()->json(['success' => false, 'message' => 'No active period found for today.']);
-            
+
+            // 2. Fallback: Try GET /PeriodCategory if SQLQueries didn't return any
+            if (empty($indicators)) {
+                try {
+                    $catData = $sap->get($user, "PeriodCategory");
+                    if (isset($catData['value']) && is_array($catData['value'])) {
+                        foreach ($catData['value'] as $cat) {
+                            $ind = $cat['PeriodCategory'] ?? $cat['Category'] ?? $cat['Indicator'] ?? null;
+                            if ($ind) {
+                                $indicators[] = ['Indicator' => $ind];
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Ignore fallback failure
+                }
+            }
+
+            // 3. Fallback: Try GET /FinancialPeriods if still empty
+            if (empty($indicators)) {
+                try {
+                    $fpData = $sap->get($user, "FinancialPeriods");
+                    if (isset($fpData['value']) && is_array($fpData['value'])) {
+                        foreach ($fpData['value'] as $fp) {
+                            $ind = $fp['PeriodIndicator'] ?? $fp['Indicator'] ?? null;
+                            if ($ind) {
+                                $indicators[] = ['Indicator' => $ind];
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Ignore fallback failure
+                }
+            }
+
+            // Collect debug logs from session (populated by SapService)
+            $debugLogs = session()->get('sap_debug_logs', []);
+
+            if (count($indicators) > 0) {
+                // Deduplicate indicators by 'Indicator' key
+                $uniqueIndicators = collect($indicators)->unique('Indicator')->values()->all();
+                return response()->json([
+                    'success' => true, 
+                    'indicators' => $uniqueIndicators,
+                    'debug_logs' => $debugLogs
+                ]);
+            }
+
+            return response()->json([
+                'success' => false, 
+                'message' => 'No active period indicator found in SAP.',
+                'debug_logs' => $debugLogs
+            ]);
+
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            $debugLogs = session()->get('sap_debug_logs', []);
+            return response()->json([
+                'success' => false, 
+                'message' => 'SAP Error: ' . $e->getMessage(),
+                'debug_logs' => $debugLogs
+            ], 500);
         }
     }
 
@@ -87,11 +190,36 @@ class ConfigController extends Controller
             
             $data = $sap->getDatabases();
             
-            if (isset($data['value'])) {
-                return response()->json(['success' => true, 'databases' => $data['value']]);
+            $databases = [];
+            if (is_array($data)) {
+                if (isset($data['value']) && is_array($data['value'])) {
+                    $databases = $data['value'];
+                } else {
+                    $databases = $data;
+                }
             }
             
-            return response()->json(['success' => false, 'message' => 'No databases found.']);
+            // Normalize database items into [{CompanyDB: '...', CompanyName: '...'}]
+            $normalized = collect($databases)->map(function($item) {
+                if (is_string($item)) {
+                    return ['CompanyDB' => $item, 'CompanyName' => $item];
+                }
+                if (is_array($item)) {
+                    $db = $item['CompanyDB'] ?? $item['dbName'] ?? $item['Code'] ?? $item['name'] ?? $item['db'] ?? null;
+                    if (!$db && count($item) > 0) {
+                        $db = reset($item);
+                    }
+                    $name = $item['CompanyName'] ?? $item['companyName'] ?? $item['Name'] ?? $db;
+                    return ['CompanyDB' => $db, 'CompanyName' => $name];
+                }
+                return null;
+            })->filter(fn($i) => !empty($i['CompanyDB']))->values()->all();
+            
+            if (count($normalized) > 0) {
+                return response()->json(['success' => true, 'databases' => $normalized]);
+            }
+            
+            return response()->json(['success' => false, 'message' => 'No databases found in SAP response.']);
             
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);

@@ -1,287 +1,305 @@
 <x-app-layout>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="purchaseRequestForm()">
-        <!-- Toolbar -->
-        <div class="flex items-center justify-between mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <div class="flex space-x-2">
-                <button type="button" class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" title="Find Mode">
-                    <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg> Find
-                </button>
-                <button type="button" class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" title="Add Mode">
-                    <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Add
-                </button>
-                <div class="h-6 border-l border-gray-300 mx-2"></div>
-                <button type="button" class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" title="Previous Record">
-                    <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                </button>
-                <button type="button" class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" title="Next Record">
-                    <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </button>
+    <div class="px-4 sm:px-6 lg:px-8 py-8" x-data="purchaseRequestForm()">
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-900">Create Purchase Request</h1>
+                <p class="mt-1 text-sm text-gray-500">Submit a new purchase request to SAP Business One.</p>
             </div>
-            <h1 class="text-xl font-bold text-gray-800">Purchase Request</h1>
+            <div class="shrink-0">
+                <a href="{{ route('purchase-request.index') }}" class="inline-flex items-center rounded-md bg-white px-3.5 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors">
+                    Back to List
+                </a>
+            </div>
         </div>
 
-        <form action="#" method="POST" class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
-            <!-- Header Section -->
-            <div class="p-6 border-b border-gray-200 bg-gray-50">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                    <!-- Left Column -->
-                    <div class="space-y-4">
-                        <div class="flex items-center">
-                            <label class="w-1/3 text-sm font-medium text-gray-700">Vendor</label>
-                            <div class="w-2/3 flex space-x-2">
-                                <input type="text" x-model="vendorCode" class="block w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition-shadow hover:shadow-md" placeholder="CardCode">
-                                <button type="button" @click="$dispatch('open-vendor-modal')" class="p-1.5 border border-gray-300 rounded-md bg-gray-50 hover:bg-white hover:shadow-md hover:border-indigo-300 transition-all transform hover:scale-105 active:scale-95"><svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+        <form action="{{ route('purchase-request.store') }}" method="POST" class="mt-8 space-y-8" @submit.prevent="submitForm">
+            @csrf
+
+            <!-- Header Information -->
+            <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
+                <div class="px-4 py-6 sm:p-8">
+                    <div class="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                        
+                        <!-- Dates -->
+                        <div class="sm:col-span-3">
+                            <label for="document_date" class="block text-sm font-medium leading-6 text-gray-900">Document Date</label>
+                            <div class="mt-2">
+                                <input type="date" name="document_date" id="document_date" x-model="formData.document_date" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" required>
                             </div>
                         </div>
-                        <div class="flex items-center">
-                            <label class="w-1/3 text-sm font-medium text-gray-700">Name</label>
-                            <div class="w-2/3">
-                                <input type="text" x-model="vendorName" class="block w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-gray-100" readonly placeholder="Vendor Name">
+
+                        <div class="sm:col-span-3">
+                            <label for="valid_until" class="block text-sm font-medium leading-6 text-gray-900">Valid Until</label>
+                            <div class="mt-2">
+                                <input type="date" name="valid_until" id="valid_until" x-model="formData.valid_until" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" required>
                             </div>
                         </div>
-                        <div class="flex items-center">
-                            <label class="w-1/3 text-sm font-medium text-gray-700">Contact Person</label>
-                            <div class="w-2/3">
-                                <select x-model="selectedContactPerson" class="block w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                                    <option value="">Select Contact...</option>
-                                    <template x-for="contact in contactPersons" :key="contact.InternalCode">
-                                        <option :value="contact.InternalCode" x-text="contact.Name"></option>
-                                    </template>
+
+                        <div class="sm:col-span-3">
+                            <label for="posting_date" class="block text-sm font-medium leading-6 text-gray-900">Posting Date</label>
+                            <div class="mt-2">
+                                <input type="date" name="posting_date" id="posting_date" x-model="formData.posting_date" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" required>
+                            </div>
+                        </div>
+
+                        <div class="sm:col-span-3">
+                            <label for="required_date" class="block text-sm font-medium leading-6 text-gray-900">Required Date</label>
+                            <div class="mt-2">
+                                <input type="date" name="required_date" id="required_date" x-model="formData.required_date" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" required>
+                            </div>
+                        </div>
+
+                        <!-- Vendor Selection -->
+                        <div class="sm:col-span-3">
+                            <label for="vendor" class="block text-sm font-medium leading-6 text-gray-900">Vendor</label>
+                            <div class="mt-2 flex space-x-2">
+                                <input type="text" x-model="vendorName" readonly class="block w-full rounded-md border-0 py-1.5 bg-gray-50 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6" placeholder="Select a vendor...">
+                                <input type="hidden" name="vendor" x-model="formData.vendor" required>
+                                <button type="button" @click="openVendorModal" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Select</button>
+                            </div>
+                        </div>
+
+                        <!-- Tax Code -->
+                        <div class="sm:col-span-3">
+                            <label for="tax_code" class="block text-sm font-medium leading-6 text-gray-900">Tax Code</label>
+                            <div class="mt-2">
+                                <select name="tax_code" id="tax_code" x-model="formData.tax_code" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" required>
+                                    <option value="" disabled>Select a Tax Code</option>
+                                    @foreach($taxes as $tax)
+                                        <option value="{{ $tax->code }}">{{ $tax->code }} - {{ $tax->name }} ({{ number_format($tax->rate, 2) }}%)</option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Right Column -->
-                    <div class="space-y-4">
-                        <div class="flex items-center">
-                            <label class="w-1/3 text-sm font-medium text-gray-700">No.</label>
-                            <div class="w-2/3 flex space-x-2">
-                                <select x-model="selectedSeries" class="block w-1/3 px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                                    <template x-for="series in seriesList" :key="series.Series">
-                                        <option :value="series.Series" x-text="series.Name"></option>
-                                    </template>
-                                </select>
-                                <input type="text" class="block w-2/3 px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-gray-100" readonly placeholder="DocNum (Auto)">
-                            </div>
-                        </div>
-                        <div class="flex items-center">
-                            <label class="w-1/3 text-sm font-medium text-gray-700">Posting Date</label>
-                            <div class="w-2/3">
-                                <input type="date" class="block w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" value="{{ date('Y-m-d') }}">
-                            </div>
-                        </div>
-                        <div class="flex items-center">
-                            <label class="w-1/3 text-sm font-medium text-gray-700">Valid Until</label>
-                            <div class="w-2/3">
-                                <input type="date" class="block w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" value="{{ date('Y-m-d') }}">
-                            </div>
-                        </div>
-                        <div class="flex items-center">
-                            <label class="w-1/3 text-sm font-medium text-gray-700">Document Date</label>
-                            <div class="w-2/3">
-                                <input type="date" class="block w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" value="{{ date('Y-m-d') }}">
-                            </div>
-                        </div>
+            <!-- Items Information -->
+            <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
+                <div class="px-4 py-6 sm:p-8">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-base font-semibold leading-7 text-gray-900">Document Lines</h2>
+                        <button type="button" @click="openItemModal" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-indigo-600 shadow-sm ring-1 ring-inset ring-indigo-300 hover:bg-indigo-50">
+                            Add Item
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead>
+                                <tr>
+                                    <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Item Code</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Description</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 w-32">Quantity</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 w-48">Unit Price</th>
+                                    <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <template x-for="(line, index) in formData.lines" :key="index">
+                                    <tr>
+                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900">
+                                            <input type="hidden" :name="`lines[${index}][item_code]`" :value="line.item_code">
+                                            <span x-text="line.item_code"></span>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            <input type="hidden" :name="`lines[${index}][item_description]`" :value="line.item_description">
+                                            <span x-text="line.item_description"></span>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            <input type="number" :name="`lines[${index}][quantity]`" x-model="line.quantity" min="0.01" step="0.01" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" required>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            <input type="number" :name="`lines[${index}][price]`" x-model="line.price" min="0" step="0.01" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        </td>
+                                        <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium">
+                                            <button type="button" @click="removeLine(index)" class="text-red-600 hover:text-red-900">Remove</button>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <tr x-show="formData.lines.length === 0">
+                                    <td colspan="5" class="py-4 text-center text-sm text-gray-500">No items added yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <!-- Lines Section (Matrix) -->
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-8">#</th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item No.</th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Description</th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">UoM</th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Whse Code</th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Whse Name</th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tax Code</th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total (LC)</th>
-                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-8"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <template x-for="(row, index) in rows" :key="index">
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-3 py-2 text-sm text-gray-500" x-text="index + 1"></td>
-                                <td class="px-3 py-2">
-                                    <div class="flex items-center space-x-1">
-                                        <input type="text" x-model="row.itemCode" class="block w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500">
-                                        <button type="button" class="p-1 border border-gray-300 rounded bg-gray-100 hover:bg-gray-200"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
-                                    </div>
-                                </td>
-                                <td class="px-3 py-2"><input type="text" x-model="row.itemName" class="block w-full px-2 py-1 text-sm border border-gray-300 rounded bg-gray-50" readonly></td>
-                                <td class="px-3 py-2"><input type="number" x-model="row.quantity" class="block w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500 text-right"></td>
-                                <td class="px-3 py-2"><input type="text" x-model="row.uom" class="block w-16 px-2 py-1 text-sm border border-gray-300 rounded bg-gray-50" readonly></td>
-                                <td class="px-3 py-2">
-                                    <div class="flex items-center space-x-1">
-                                        <input type="text" x-model="row.whsCode" class="block w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500">
-                                        <button type="button" class="p-1 border border-gray-300 rounded bg-gray-100 hover:bg-gray-200"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
-                                    </div>
-                                </td>
-                                <td class="px-3 py-2"><input type="text" x-model="row.whsName" class="block w-32 px-2 py-1 text-sm border border-gray-300 rounded bg-gray-50" readonly></td>
-                                <td class="px-3 py-2"><input type="number" x-model="row.price" class="block w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500 text-right"></td>
-                                <td class="px-3 py-2"><input type="text" x-model="row.taxCode" class="block w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500"></td>
-                                <td class="px-3 py-2"><input type="text" :value="(row.quantity * row.price).toFixed(2)" class="block w-24 px-2 py-1 text-sm border border-gray-300 rounded bg-gray-50 text-right" readonly></td>
-                                <td class="px-3 py-2 text-right">
-                                    <button @click="removeRow(index)" type="button" class="text-red-500 hover:text-red-700">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                    </button>
-                                </td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
-                <div class="px-4 py-3 bg-gray-50 border-t border-gray-200">
-                    <button @click="addRow()" type="button" class="text-sm font-medium text-indigo-600 hover:text-indigo-800 focus:outline-none">
-                        + Add Row
-                    </button>
+            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <input type="hidden" name="instant_sync" value="0">
+                    <input id="instant_sync" name="instant_sync" value="1" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                    <label for="instant_sync" class="text-sm font-medium text-gray-700 cursor-pointer select-none">Instant Sync to SAP</label>
                 </div>
-            </div>
-
-            <!-- Footer Section -->
-            <div class="p-6 border-t border-gray-200 bg-gray-50">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                    <!-- Remarks -->
-                    <div class="flex flex-col space-y-2">
-                        <label class="text-sm font-medium text-gray-700">Remarks</label>
-                        <textarea rows="4" class="block w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"></textarea>
-                    </div>
-
-                    <!-- Totals -->
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm font-medium text-gray-700">Total Before Discount</span>
-                            <input type="text" class="block w-40 px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-gray-100 text-right font-semibold" readonly value="0.00">
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm font-medium text-gray-700">Tax</span>
-                            <input type="text" class="block w-40 px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-gray-100 text-right font-semibold" readonly value="0.00">
-                        </div>
-                        <div class="flex justify-between items-center pt-3 border-t border-gray-300">
-                            <span class="text-base font-bold text-gray-900">Total Payment</span>
-                            <input type="text" class="block w-40 px-3 py-1.5 text-base border border-gray-300 rounded-md bg-indigo-50 text-indigo-900 text-right font-bold" readonly value="0.00">
-                        </div>
-                    </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="{{ route('purchase-request.index') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">Cancel</a>
+                    <button type="submit" class="inline-flex justify-center px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-500 transition-all">Save Purchase Request</button>
                 </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="px-6 py-4 bg-gray-50/50 backdrop-blur-sm border-t border-gray-200 flex justify-start space-x-3">
-                <button type="submit" class="px-6 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg shadow hover:bg-indigo-500 hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Add
-                </button>
-                <button type="button" class="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 hover:shadow-md hover:border-gray-400 transition-all transform hover:-translate-y-0.5 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Cancel
-                </button>
             </div>
         </form>
-        <!-- Missing Config Modal -->
-        <div x-show="missingConfig" 
-             class="fixed z-[200] inset-0 overflow-y-auto" 
+
+        <x-vendor-modal />
+        
+        <!-- Item Selection Modal -->
+        <div x-show="isItemModalOpen" 
+             class="fixed inset-0 z-[100] overflow-y-auto" 
              aria-labelledby="modal-title" 
              role="dialog" 
              aria-modal="true" 
              style="display: none;">
-            <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div x-show="missingConfig" 
+            <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
+                <!-- Background overlay -->
+                <div x-show="isItemModalOpen" 
+                     x-transition:enter="ease-out duration-300" 
+                     x-transition:enter-start="opacity-0" 
+                     x-transition:enter-end="opacity-100" 
+                     x-transition:leave="ease-in duration-200" 
+                     x-transition:leave-start="opacity-100" 
+                     x-transition:leave-end="opacity-0" 
                      class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" 
-                     aria-hidden="true"></div>
-                
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                
-                <div x-show="missingConfig" 
-                     class="inline-block align-middle bg-white/90 backdrop-blur-xl border border-white/50 rounded-2xl text-center overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-sm sm:w-full p-8">
-                    <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-6">
-                        <svg class="h-10 w-10 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
+                     @click="isItemModalOpen = false"></div>
+
+                <!-- Modal Panel -->
+                <div x-show="isItemModalOpen" 
+                     x-transition:enter="ease-out duration-300" 
+                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" 
+                     x-transition:leave="ease-in duration-200" 
+                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" 
+                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                     class="relative z-50 inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full p-6 border border-gray-100">
+                    
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900" id="modal-title">Select Item</h3>
+                        <button type="button" @click="isItemModalOpen = false" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
                     </div>
-                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Configuration Required</h3>
-                    <p class="text-sm text-gray-600 mb-8">
-                        The Period Indicator is not configured. Please go to the configuration page to fetch and save the active Period Indicator before creating a document.
-                    </p>
-                    <a href="{{ route('config.index') }}" class="inline-flex justify-center w-full rounded-lg border border-transparent shadow-md px-6 py-3 bg-indigo-600 text-base font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all transform hover:-translate-y-0.5 active:scale-95">
-                        Go to Configuration
-                    </a>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium leading-6 text-gray-900 mb-1">Item</label>
+                            <select x-model="selectedItemCode" @change="onItemChange" class="block w-full rounded-md border-0 py-2 pl-3 pr-8 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm">
+                                <option value="">Select an Item</option>
+                                <template x-for="item in availableItems" :key="item.ItemCode">
+                                    <option :value="item.ItemCode" x-text="item.ItemCode + ' - ' + item.ItemName"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div x-show="isLoadingItems" class="py-4 text-center">
+                            <svg class="animate-spin h-6 w-6 text-indigo-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span class="text-sm text-gray-500">Loading items from local database...</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" @click="isItemModalOpen = false" class="rounded-md bg-white px-3.5 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors">Cancel</button>
+                        <button type="button" @click="addLine" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">Add Item</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Reusable Vendor Modal Component -->
-        <x-vendor-modal @vendor-selected="handleVendorSelected($event.detail)" />
+    </div>
+
     <script>
-        function purchaseRequestForm() {
-            return {
-                vendorCode: '',
-                vendorName: '',
-                contactPersons: [],
-                selectedContactPerson: '',
-                seriesList: [],
-                selectedSeries: '',
-                missingConfig: false,
-                
-                init() {
-                    this.fetchSeries();
+        document.addEventListener('alpine:init', () => {
+            const today = new Date().toISOString().split('T')[0];
+            
+            Alpine.data('purchaseRequestForm', () => ({
+                formData: {
+                    document_date: today,
+                    valid_until: today,
+                    posting_date: today,
+                    required_date: today,
+                    vendor: '',
+                    tax_code: '',
+                    lines: []
                 },
-                
-                fetchSeries() {
-                    fetch('/api/purchase-request/series')
+                vendorName: '',
+                isItemModalOpen: false,
+                availableItems: [],
+                isLoadingItems: false,
+                selectedItemCode: '',
+                newItem: {
+                    item_code: '',
+                    item_description: '',
+                    quantity: 1,
+                    price: 0
+                },
+
+                openVendorModal() {
+                    window.dispatchEvent(new CustomEvent('open-vendor-modal'));
+                },
+
+                openItemModal() {
+                    this.newItem = { item_code: '', item_description: '', quantity: 1, price: 0 };
+                    this.selectedItemCode = '';
+                    this.isItemModalOpen = true;
+                    if (this.availableItems.length === 0) {
+                        this.fetchItems();
+                    }
+                },
+
+                fetchItems() {
+                    this.isLoadingItems = true;
+                    fetch('{{ route("api.items") }}')
                         .then(res => res.json())
                         .then(data => {
                             if (data.success) {
-                                this.seriesList = data.data;
-                                // Default to the first series, or find one where IsDefault === 'tYES' if SAP provides it
-                                if (this.seriesList.length > 0) {
-                                    this.selectedSeries = this.seriesList[0].Series;
-                                }
-                            } else if (data.missing_config) {
-                                this.missingConfig = true;
-                            } else {
-                                window.dispatchEvent(new CustomEvent('flash-message', {
-                                    detail: { type: 'error', message: 'Failed to fetch series: ' + data.message }
-                                }));
+                                this.availableItems = data.data;
                             }
                         })
-                        .catch(err => console.error(err));
+                        .finally(() => {
+                            this.isLoadingItems = false;
+                        });
                 },
-                
-                rows: [
-                    { itemCode: '', itemName: '', quantity: 1, uom: '', whsCode: '', whsName: '', price: 0.0, taxCode: '' }
-                ],
-                
-                addRow() {
-                    this.rows.push({ itemCode: '', itemName: '', quantity: 1, uom: '', whsCode: '', whsName: '', price: 0.0, taxCode: '' });
-                },
-                
-                removeRow(index) {
-                    this.rows.splice(index, 1);
-                    if (this.rows.length === 0) {
-                        this.addRow();
-                    }
-                },
-                
-                handleVendorSelected(vendor) {
-                    this.vendorCode = vendor.CardCode;
-                    this.vendorName = vendor.CardName;
-                    this.contactPersons = vendor.ContactEmployees || [];
-                    
-                    if (this.contactPersons.length === 0) {
-                        this.selectedContactPerson = '';
-                    } else if (this.contactPersons.length === 1) {
-                        this.selectedContactPerson = this.contactPersons[0].InternalCode;
+
+                onItemChange() {
+                    const item = this.availableItems.find(i => i.ItemCode === this.selectedItemCode);
+                    if (item) {
+                        this.newItem.item_code = item.ItemCode;
+                        this.newItem.item_description = item.ItemName;
                     } else {
-                        // More than one contact: try to find default, or pick first
-                        // Default contact in SAP B1 is usually matched by vendor.ContactPerson (Name), but here we just take the first as default.
-                        this.selectedContactPerson = this.contactPersons[0].InternalCode;
+                        this.newItem.item_code = '';
+                        this.newItem.item_description = '';
                     }
+                },
+
+                addLine() {
+                    if (this.newItem.item_code) {
+                        this.formData.lines.push({...this.newItem});
+                        this.isItemModalOpen = false;
+                    } else {
+                        alert('Item Code is required');
+                    }
+                },
+
+                removeLine(index) {
+                    this.formData.lines.splice(index, 1);
+                },
+
+                submitForm(e) {
+                    if (this.formData.lines.length === 0) {
+                        alert('Please add at least one item.');
+                        return;
+                    }
+                    e.target.submit();
                 }
-            }
-        }
+            }))
+        })
+
+        // Listen for vendor selection from vendor-modal
+        window.addEventListener('vendor-selected', (e) => {
+            const form = document.querySelector('[x-data="purchaseRequestForm()"]').__x.$data;
+            form.formData.vendor = e.detail.CardCode;
+            form.vendorName = e.detail.CardName + ' (' + e.detail.CardCode + ')';
+        });
     </script>
 </x-app-layout>

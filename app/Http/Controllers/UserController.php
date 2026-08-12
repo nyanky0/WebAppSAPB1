@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Models\SystemLog;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
@@ -39,6 +40,8 @@ class UserController extends Controller
             'updated_by' => auth()->id(),
         ]);
 
+        SystemLog::logAction('admin', 'Created User', "User {$request->username} created.");
+
         return back()->with('success', 'User created successfully.');
     }
 
@@ -67,6 +70,8 @@ class UserController extends Controller
         }
 
         $user->update($data);
+        
+        SystemLog::logAction('admin', 'Updated User', "User {$user->username} updated.");
 
         return back()->with('success', 'User updated successfully.');
     }
@@ -76,6 +81,8 @@ class UserController extends Controller
         if ($user->uid7 === auth()->id()) {
             return back()->withErrors(['Cannot delete yourself.']);
         }
+
+        SystemLog::logAction('admin', 'Deleted User', "User {$user->username} deleted.");
         $user->delete();
         return back()->with('success', 'User deleted successfully.');
     }

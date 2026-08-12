@@ -1,0 +1,215 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\ItemGroup;
+use App\Models\Config;
+use App\Services\SapService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use App\Models\SystemLog;
+
+class ItemGroupController extends Controller
+{
+    public function index(Request $request)
+    {
+        // Simple search and filter implementation
+        $query = ItemGroup::query();
+        
+        if ($request->has('search')) {
+            $search = $request->get('search');
+            $query->where('sap_number', 'ilike', "%{$search}%")
+                  ->orWhere('group_name', 'ilike', "%{$search}%");
+        }
+        
+        // Sorting
+        $sort = $request->get('sort', 'id');
+        $direction = $request->get('direction', 'asc');
+        $query->orderBy($sort, $direction);
+        
+        // Pagination
+        $itemGroups = $query->paginate(20)->withQueryString();
+        
+        return view('item-groups.index', compact('itemGroups', 'sort', 'direction'));
+    }
+
+    public function sync(Request $request)
+    {
+        set_time_limit(300); // Allow script to run longer for syncing
+        
+        try {
+            $config = Config::first();
+            if (!$config || !$config->base_url || !$config->database || !$config->period_indicator) {
+                return redirect()->back()->with('error', 'SAP Configuration is incomplete. Please setup the connection first.');
+            }
+            
+            $sap = new SapService($config);
+            $user = auth()->user();
+            
+            // Fetch ItemGroups using Pagination Loop
+            $groupsSynced = 0;
+            $nextLink = '/ItemGroups?$select=Number,GroupName';
+            
+            DB::beginTransaction();
+            
+            try {
+                while ($nextLink) {
+                    $path = $nextLink;
+                    if (strpos($nextLink, 'http') === 0) {
+                        $parsedUrl = parse_url($nextLink);
+                        $path = $parsedUrl['path'] . (isset($parsedUrl['query']) ? '?' . $parsedUrl['query'] : '');
+                        $path = preg_replace('/^\/b1s\/v[12]\//', '/', $path);
+                    }
+                    
+                    $path = ltrim($path, '/');
+
+                    $response = $sap->get($user, $path);
+                    
+                    if (isset($response['value']) && is_array($response['value'])) {
+                        foreach ($response['value'] as $sapGroup) {
+                            if (!isset($sapGroup['Number'])) {
+                                continue;
+                            }
+                            
+                            $localGroup = ItemGroup::where('sap_number', $sapGroup['Number'])
+                                ->orWhere('group_name', $sapGroup['GroupName'])
+                                ->first();
+                            if ($localGroup) {
+                                $localGroup->update([
+                                    'sap_number' => $sapGroup['Number'],
+                                    'group_name' => $sapGroup['GroupName'] ?? $localGroup->group_name,
+                                    'sync_status' => 'Synced',
+                                    'sap_status' => 'Created'
+                                ]);
+                            } else {
+                                ItemGroup::create([
+                                    'sap_number' => $sapGroup['Number'],
+                                    'group_name' => $sapGroup['GroupName'] ?? null,
+                                    'sync_status' => 'Synced',
+                                    'sap_status' => 'Created'
+                                ]);
+                            }
+                            
+                            $groupsSynced++;
+                        }
+                    }
+                    
+                    if (isset($response['odata.nextLink'])) {
+                        $nextLink = $response['odata.nextLink'];
+                    } else if (isset($response['@odata.nextLink'])) {
+                        $nextLink = $response['@odata.nextLink'];
+                    } else {
+                        $nextLink = null;
+                    }
+                }
+                
+                DB::commit();
+                
+                SystemLog::logAction('sap', 'Synced Item Groups', "Successfully synced {$groupsSynced} item groups from SAP.");
+
+                return redirect()->route('item-groups.index')->with('success', "Successfully synced {$groupsSynced} Item Groups from SAP Business One.");
+                
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('Item Group Sync Error: ' . $e->getMessage());
+                return redirect()->back()->with('error', 'Error syncing item groups: ' . $e->getMessage());
+            }
+            
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'An error occurred: ' . $e->getMessage());
+        }
+    }
+
+    public function create()
+    {
+        return view('item-groups.create');
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'group_name' => 'required|string|max:255',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $group = ItemGroup::create([
+                'group_name' => $validated['group_name'],
+                'sync_status' => 'Draft',
+            ]);
+
+            DB::commit();
+
+            if ($request->has('instant_sync') && $request->instant_sync) {
+                try {
+                    $config = Config::first();
+                    $sap = new SapService($config);
+                    $this->pushToSap($group, $sap);
+                    return redirect()->route('item-groups.index')->with('success', 'Item Group created and instantly synced to SAP!');
+                } catch (\Exception $e) {
+                    return redirect()->route('item-groups.index')->with('warning', 'Item Group created locally as Draft, but instant sync failed: ' . $e->getMessage());
+                }
+            }
+
+            return redirect()->route('item-groups.index')->with('success', 'Item Group created successfully and saved as Draft.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to create item group: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    public function pushSingle(ItemGroup $group)
+    {
+        try {
+            $config = Config::first();
+            $sap = new SapService($config);
+            $this->pushToSap($group, $sap);
+            return redirect()->route('item-groups.index')->with('success', "Item Group '{$group->group_name}' pushed successfully to SAP!");
+        } catch (\Exception $e) {
+            return redirect()->route('item-groups.index')->with('error', "Failed to push Item Group to SAP: " . $e->getMessage());
+        }
+    }
+
+    public function pushToSap(ItemGroup $group, SapService $sap)
+    {
+        try {
+            $payload = [
+                'GroupName' => $group->group_name
+            ];
+
+            $response = $sap->post(auth()->user(), 'ItemGroups', $payload);
+            
+            $sapNumber = $response['Number'] ?? null;
+
+            // If SAP didn't return Number directly in response, fetch created group by GroupName to retrieve SAP Number
+            if (!$sapNumber) {
+                try {
+                    $encodedName = rawurlencode($group->group_name);
+                    $fetchRes = $sap->get(auth()->user(), "ItemGroups?\$filter=GroupName eq '{$encodedName}'");
+                    if (isset($fetchRes['value'][0]['Number'])) {
+                        $sapNumber = $fetchRes['value'][0]['Number'];
+                    }
+                } catch (\Exception $ex) {
+                    Log::warning("Failed to fetch Group Number by name for '{$group->group_name}': " . $ex->getMessage());
+                }
+            }
+            
+            $group->update([
+                'sap_number' => $sapNumber,
+                'sync_status' => 'Synced',
+                'sap_status' => 'Created',
+                'sync_error' => null
+            ]);
+            
+            SystemLog::logAction('sap', 'Synced Item Group', "Item Group '{$group->group_name}' (SAP Group #{$sapNumber}) successfully pushed to SAP.");
+        } catch (\Exception $e) {
+            $group->update([
+                'sync_status' => 'Failed',
+                'sync_error' => $e->getMessage()
+            ]);
+            SystemLog::logAction('sap', 'Sync Item Group Failed', "Item Group '{$group->group_name}' failed: " . $e->getMessage());
+            throw $e;
+        }
+    }
+}

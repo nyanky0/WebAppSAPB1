@@ -22,6 +22,19 @@ class SapService
         $this->companyDb = $config->database;
     }
 
+    protected function logDebug($user, $method, $url, $body, $response)
+    {
+        $log = [
+            'method' => $method,
+            'url' => $url,
+            'database' => $this->companyDb,
+            'body' => $body ? json_encode($body, JSON_PRETTY_PRINT) : null,
+            'response' => $response->body(),
+            'status' => $response->status()
+        ];
+        session()->push('sap_debug_logs', $log);
+    }
+
     public function login($user)
     {
         if (!$user->sap_user || !$user->sap_password) {
@@ -82,6 +95,8 @@ class SapService
                 ->get("{$this->baseUrl}/$endpoint");
         }
 
+        $this->logDebug($user, 'GET', "{$this->baseUrl}/$endpoint", null, $response);
+
         if ($response->successful()) {
             return $response->json();
         }
@@ -116,6 +131,8 @@ class SapService
                 ->post("{$this->baseUrl}/$endpoint", $data);
         }
 
+        $this->logDebug($user, 'POST', "{$this->baseUrl}/$endpoint", $data, $response);
+
         if ($response->successful()) {
             return $response->json();
         }
@@ -128,16 +145,36 @@ class SapService
         $parsed = parse_url($this->baseUrl);
         $hostHeader = 'localhost' . (isset($parsed['port']) ? ':' . $parsed['port'] : '');
 
+        // 1. Try POST with Host header (standard for SAP B1 Service Layer CompanyService_GetCompanyList)
         $response = Http::withoutVerifying()
-            ->withHeaders([
-                'Host' => $hostHeader
-            ])
-            ->get("{$this->baseUrl}/CompanyService_GetCompanyList");
+            ->withHeaders(['Host' => $hostHeader])
+            ->post("{$this->baseUrl}/CompanyService_GetCompanyList", []);
+
+        // 2. Try POST without Host header
+        if (!$response->successful()) {
+            $response = Http::withoutVerifying()
+                ->post("{$this->baseUrl}/CompanyService_GetCompanyList", []);
+        }
+
+        // 3. Try GET with Host header
+        if (!$response->successful()) {
+            $response = Http::withoutVerifying()
+                ->withHeaders(['Host' => $hostHeader])
+                ->get("{$this->baseUrl}/CompanyService_GetCompanyList");
+        }
+
+        // 4. Try GET without Host header
+        if (!$response->successful()) {
+            $response = Http::withoutVerifying()
+                ->get("{$this->baseUrl}/CompanyService_GetCompanyList");
+        }
+
+        $this->logDebug(auth()->user(), 'POST/GET', "{$this->baseUrl}/CompanyService_GetCompanyList", null, $response);
 
         if ($response->successful()) {
             return $response->json();
         }
 
-        throw new Exception("SAP Request Failed: " . $response->body());
+        throw new Exception("SAP Request Failed (" . $response->status() . "): " . $response->body());
     }
 }

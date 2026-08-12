@@ -18,6 +18,8 @@ class UserSeeder extends Seeder
             'name' => 'Manager',
             'username' => 'manager',
             'password' => \Illuminate\Support\Facades\Hash::make('P@ssw0rd'),
+            'sap_user' => 'manager',
+            'sap_password' => 'P@ssw0rd',
             'role_id' => $role?->id,
         ]);
     }

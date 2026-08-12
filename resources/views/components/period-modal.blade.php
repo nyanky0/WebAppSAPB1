@@ -87,11 +87,15 @@
                 this.isLoading = true;
                 this.indicators = [];
                 
+                console.group('🔍 SAP B1 AddOn - Fetch Period Indicator Debug Console');
+                console.info('📍 Target Base URL:', credentials.baseUrl);
+                console.info('🗄️ Target Database:', credentials.database);
+                
                 fetch('{{ route("api.config.fetch-period") }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({
                         base_url: credentials.baseUrl,
@@ -100,7 +104,23 @@
                 })
                 .then(res => res.json())
                 .then(data => {
+                    if (data.debug_logs && data.debug_logs.length > 0) {
+                        console.group('🚀 SAP Service Layer HTTP Calls (Postman Debugger)');
+                        data.debug_logs.forEach((log, i) => {
+                            console.group(`[${i + 1}] ${log.method} ${log.url}`);
+                            console.log('HTTP Method:', log.method);
+                            console.log('URL:', log.url);
+                            console.log('CompanyDB Used:', credentials.database);
+                            if (log.body) console.log('Request Body:', log.body);
+                            console.log('HTTP Status Code:', log.status);
+                            console.log('SAP Raw Response:', log.response);
+                            console.groupEnd();
+                        });
+                        console.groupEnd();
+                    }
+                    
                     if (data.success) {
+                        console.info('✅ Period Indicators Found:', data.indicators);
                         this.indicators = data.indicators || [];
                         if (this.indicators.length === 0) {
                             this.isOpen = false;
@@ -109,15 +129,17 @@
                             }));
                         }
                     } else {
-                        // Close modal on error and show flash message
+                        console.error('❌ Fetch Period Failed:', data.message);
                         this.isOpen = false;
                         window.dispatchEvent(new CustomEvent('flash-message', {
                             detail: { type: 'error', message: data.message }
                         }));
                     }
+                    console.groupEnd();
                 })
                 .catch(err => {
-                    console.error(err);
+                    console.error('❌ Server/Network Connection Error:', err);
+                    console.groupEnd();
                     this.isOpen = false;
                     window.dispatchEvent(new CustomEvent('flash-message', {
                         detail: { type: 'error', message: 'Failed to connect to SAP Service Layer.' }

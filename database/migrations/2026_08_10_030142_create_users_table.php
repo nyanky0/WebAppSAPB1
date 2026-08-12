@@ -16,13 +16,13 @@ return new class extends Migration
             $table->string('name');
             $table->string('username')->unique();
             $table->string('password');
+            $table->boolean('debug_mode')->default(false);
             $table->string('sap_user')->nullable();
             $table->string('sap_password')->nullable();
             $table->foreignId('role_id')->nullable()->constrained('roles')->onDelete('set null');
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();
-
         });
 
         Schema::table('users', function (Blueprint $table) {

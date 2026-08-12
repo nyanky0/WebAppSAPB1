@@ -15,6 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('base_url')->nullable();
             $table->string('database')->nullable();
+            $table->string('period_indicator')->nullable();
+            $table->boolean('scheduler_active')->default(false);
+            $table->integer('scheduler_interval')->default(5);
             $table->timestamps();
         });
     }

@@ -6,5 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Config extends Model
 {
-    protected $fillable = ['base_url', 'database', 'period_indicator'];
+    protected $fillable = [
+        'base_url',
+        'database',
+        'period_indicator',
+        'scheduler_active',
+        'scheduler_interval',
+    ];
 }

@@ -1,11 +1,17 @@
 <x-app-layout>
     <div class="px-4 sm:px-6 lg:px-8 py-8">
-        <div class="sm:flex sm:items-center">
-            <div class="sm:flex-auto">
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
                 <h1 class="text-2xl font-semibold text-gray-900">SAP Items Administration</h1>
-                <p class="mt-2 text-sm text-gray-700">A local synchronized copy of SAP Business One items. Use the Sync button to update from Service Layer.</p>
+                <p class="mt-1 text-sm text-gray-500">A local synchronized copy of SAP Business One items. Use the Sync button to update from Service Layer.</p>
             </div>
-            <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none" x-data="{ isSyncing: false }">
+            <div class="flex items-center gap-3 shrink-0" x-data="{ isSyncing: false }">
+                <a href="{{ route('items.create') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto transition-colors">
+                    <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Create Item
+                </a>
                 <form action="{{ route('items.sync') }}" method="POST" @submit="isSyncing = true">
                     @csrf
                     <button type="submit" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto transition-colors">
@@ -62,59 +68,54 @@
                         <table class="min-w-full divide-y divide-gray-300">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    @php
-                                        $cols = [
-                                            'item_code' => 'Item Code',
-                                            'item_name' => 'Item Name',
-                                            'foreign_name' => 'Foreign Name',
-                                            'uom' => 'UOM',
-                                            'item_group' => 'Item Group',
-                                            'is_active' => 'Active'
-                                        ];
-                                    @endphp
-                                    @foreach($cols as $field => $label)
-                                        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
-                                            <a href="{{ request()->fullUrlWithQuery(['sort' => $field, 'direction' => ($sort === $field && $direction === 'asc') ? 'desc' : 'asc']) }}" class="group inline-flex">
-                                                {{ $label }}
-                                                <span class="ml-2 flex-none rounded bg-gray-200 text-gray-900 group-hover:bg-gray-300">
-                                                    @if($sort === $field)
-                                                        @if($direction === 'asc')
-                                                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M14.77 12.79a.75.75 0 01-1.06-.02L10 8.832 6.29 12.77a.75.75 0 11-1.08-1.04l4.25-4.5a.75.75 0 011.08 0l4.25 4.5a.75.75 0 01-.02 1.06z" clip-rule="evenodd" /></svg>
-                                                        @else
-                                                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
-                                                        @endif
-                                                    @else
-                                                        <!-- Invisible placeholder to keep spacing -->
-                                                        <svg class="h-5 w-5 invisible group-hover:visible text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
-                                                    @endif
-                                                </span>
-                                            </a>
-                                        </th>
-                                    @endforeach
+                                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Item Code</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Item Name</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Foreign Name</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">UOM</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Item Group</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Active</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Sync Status</th>
+                                    <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Actions</span></th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 bg-white">
                                 @forelse($items as $item)
                                     <tr>
-                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">{{ $item->item_code }}</td>
-                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-700 sm:pl-6">{{ $item->item_name }}</td>
-                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-700 sm:pl-6">{{ $item->foreign_name ?: '-' }}</td>
-                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-700 sm:pl-6">
+                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-mono font-semibold text-gray-900 sm:pl-6">{{ $item->item_code }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">{{ $item->item_name }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-600">{{ $item->foreign_name ?: '-' }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm">
                                             <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">{{ $item->uom ?: 'N/A' }}</span>
                                         </td>
-                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-700 sm:pl-6">{{ $item->item_group ?: '-' }}</td>
-                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-700 sm:pl-6">
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-600">{{ $item->item_group ?: '-' }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm">
                                             @if($item->is_active)
                                                 <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Yes</span>
                                             @else
                                                 <span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">No</span>
                                             @endif
                                         </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                            <x-sync-status :status="$item->sync_status" />
+                                        </td>
+                                        <td class="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                            @if($item->sync_status === 'Draft' || $item->sync_status === 'Failed')
+                                                <form action="{{ route('items.push', $item) }}" method="POST" class="inline-block">
+                                                    @csrf
+                                                    <button type="submit" class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100 transition-colors">
+                                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                                        Sync to SAP
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <span class="text-xs text-gray-400">In Sync</span>
+                                            @endif
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="py-8 text-center text-sm text-gray-500">
-                                            No items found. Click "Sync with SAP" to download items.
+                                        <td colspan="8" class="py-8 text-center text-sm text-gray-500">
+                                            No items found. Click "Create Item" or "Sync with SAP".
                                         </td>
                                     </tr>
                                 @endforelse

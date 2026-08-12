@@ -18,7 +18,12 @@ class RoleSeeder extends Seeder
                 'Administrator.Config',
                 'Administrator.Roles',
                 'Administrator.Users',
+                'Administrator.Logs',
+                'Administrator.Items',
+                'Administrator.Taxes',
                 'Purchase.PurchaseRequest',
+                'Scheduler.MasterData',
+                'Scheduler.Document',
             ],
         ]);
     }

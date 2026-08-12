@@ -3,9 +3,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>SAP B1 AddOn</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.svg') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <!-- Add Alpine.js for interactive elements like sidebar collapse if needed -->
+    <!-- Add Alpine.js and plugins for interactive elements -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="font-sans antialiased text-gray-800 bg-gray-50 relative min-h-screen">
@@ -31,12 +35,6 @@
                     <div class="relative">
                         <span class="text-sm font-medium text-gray-700">Welcome, {{ auth()->user()->name ?? 'User' }}</span>
                     </div>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="text-sm font-semibold text-red-600 hover:text-red-800 transition-colors bg-red-50/50 backdrop-blur-sm hover:bg-red-100 px-3 py-1.5 rounded-lg shadow-sm border border-red-200/50 transform hover:-translate-y-0.5 active:scale-95">
-                            Logout
-                        </button>
-                    </form>
                 </div>
             </header>
 
@@ -45,6 +43,8 @@
                 {{ $slot }}
             </main>
         </div>
+        <!-- Global Modals -->
+        <x-debug-modal />
     </div>
 </body>
 </html>

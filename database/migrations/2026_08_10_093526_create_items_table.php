@@ -18,6 +18,9 @@ return new class extends Migration
             $table->string('uom')->nullable();
             $table->string('item_group')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->string('sync_status')->default('Draft');
+            $table->string('sap_status')->nullable();
+            $table->text('sync_error')->nullable();
             $table->timestamps();
         });
     }

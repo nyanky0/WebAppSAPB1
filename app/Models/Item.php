@@ -17,5 +17,8 @@ class Item extends Model
         'uom',
         'item_group',
         'is_active',
+        'sync_status',
+        'sap_status',
+        'sync_error'
     ];
 }

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 120" width="250" height="120">
+  <defs>
+    <linearGradient id="sap-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#008FD3"/>
+      <stop offset="100%" stop-color="#00579D"/>
+    </linearGradient>
+  </defs>
+  <rect width="250" height="120" rx="12" fill="url(#sap-grad)"/>
+  <path fill="#FFFFFF" d="M28 25h38c18 0 30 9 30 23 0 15-12 23-30 23H48v24H28V25zm20 16v14h18c8 0 12-3 12-7s-4-7-12-7H48zm62-16h20l30 70h-20l-6-16h-34l-6 16h-18l34-70zm6 17l-12 32h24l-12-32zm74-17h38c18 0 30 9 30 23 0 15-12 23-30 23h-18v24h-20V25zm20 16v14h18c8 0 12-3 12-7s-4-7-12-7h-18z"/>
+</svg>
