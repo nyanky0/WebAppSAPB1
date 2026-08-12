@@ -66,7 +66,7 @@ class ChartOfAccountController extends Controller
             $user = auth()->user();
 
             $accountsSynced = 0;
-            $nextLink = '/ChartOfAccounts?$select=Code,Name,FormatCode,AcctCurrency,Levels,Postable,ControlAccount,CashAccount,ActiveAccount,GroupMask';
+            $nextLink = '/ChartOfAccounts';
 
             DB::beginTransaction();
 
@@ -84,7 +84,8 @@ class ChartOfAccountController extends Controller
 
                 if (isset($response['value']) && is_array($response['value'])) {
                     foreach ($response['value'] as $acctData) {
-                        if (!isset($acctData['Code'])) continue;
+                        $code = $acctData['Code'] ?? ($acctData['AcctCode'] ?? null);
+                        if (!$code) continue;
 
                         $postable = ($acctData['Postable'] ?? 'tYES') === 'tYES' ? 'Postable' : 'Title';
                         $isControl = ($acctData['ControlAccount'] ?? 'tNO') === 'tYES';
@@ -106,9 +107,9 @@ class ChartOfAccountController extends Controller
                         $category = $categoryMap[$groupMask] ?? 'Assets';
 
                         ChartOfAccount::updateOrCreate(
-                            ['code' => $acctData['Code']],
+                            ['code' => $code],
                             [
-                                'name' => $acctData['Name'] ?? null,
+                                'name' => $acctData['Name'] ?? ($acctData['AcctName'] ?? null),
                                 'external_code' => $acctData['FormatCode'] ?? null,
                                 'currency' => $acctData['AcctCurrency'] ?? null,
                                 'levels' => $acctData['Levels'] ?? 1,

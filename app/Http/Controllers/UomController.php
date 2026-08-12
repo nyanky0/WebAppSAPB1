@@ -83,63 +83,85 @@ class UomController extends Controller
             $sap = new SapService($config);
             $user = auth()->user();
 
-            // 1. Sync UnitOfMeasurements
+            // 1. Sync UnitOfMeasurements / UnitOfMeasures
             $uomsSynced = 0;
-            $response = $sap->get($user, 'UnitOfMeasurements');
-            if (isset($response['value']) && is_array($response['value'])) {
-                DB::beginTransaction();
-                foreach ($response['value'] as $uomData) {
-                    if (!isset($uomData['Code'])) continue;
-
-                    Uom::updateOrCreate(
-                        ['code' => $uomData['Code']],
-                        [
-                            'abs_entry' => $uomData['AbsEntry'] ?? null,
-                            'name' => $uomData['Name'] ?? null,
-                            'sync_status' => 'Synced',
-                            'sap_status' => 'Created',
-                            'sync_error' => null
-                        ]
-                    );
-                    $uomsSynced++;
+            try {
+                $response = null;
+                try {
+                    $response = $sap->get($user, 'UnitOfMeasurements');
+                } catch (\Exception $ex) {
+                    $response = $sap->get($user, 'UnitOfMeasures');
                 }
-                DB::commit();
+
+                if (isset($response['value']) && is_array($response['value'])) {
+                    DB::beginTransaction();
+                    foreach ($response['value'] as $uomData) {
+                        $code = $uomData['Code'] ?? ($uomData['UomCode'] ?? null);
+                        if (!$code) continue;
+
+                        Uom::updateOrCreate(
+                            ['code' => $code],
+                            [
+                                'abs_entry' => $uomData['AbsEntry'] ?? null,
+                                'name' => $uomData['Name'] ?? ($uomData['UomName'] ?? $code),
+                                'sync_status' => 'Synced',
+                                'sap_status' => 'Created',
+                                'sync_error' => null
+                            ]
+                        );
+                        $uomsSynced++;
+                    }
+                    DB::commit();
+                }
+            } catch (\Exception $e) {
+                Log::warning("UoM Sync Warning: " . $e->getMessage());
             }
 
-            // 2. Sync UnitOfMeasurementGroups
+            // 2. Sync UnitOfMeasurementGroups / UnitOfMeasureGroups
             $groupsSynced = 0;
-            $groupResponse = $sap->get($user, 'UnitOfMeasurementGroups');
-            if (isset($groupResponse['value']) && is_array($groupResponse['value'])) {
-                DB::beginTransaction();
-                foreach ($groupResponse['value'] as $grpData) {
-                    if (!isset($grpData['Code'])) continue;
-
-                    $conversions = [];
-                    if (isset($grpData['UoMGroupDefinitionCollection']) && is_array($grpData['UoMGroupDefinitionCollection'])) {
-                        foreach ($grpData['UoMGroupDefinitionCollection'] as $def) {
-                            $conversions[] = [
-                                'alt_uom' => $def['AlternateUoM'] ?? null,
-                                'base_qty' => $def['BaseQuantity'] ?? 1,
-                                'alt_qty' => $def['AlternateQuantity'] ?? 1,
-                            ];
-                        }
-                    }
-
-                    UomGroup::updateOrCreate(
-                        ['group_code' => $grpData['Code']],
-                        [
-                            'abs_entry' => $grpData['AbsEntry'] ?? null,
-                            'group_name' => $grpData['Name'] ?? null,
-                            'base_uom' => $grpData['BaseUoM'] ?? null,
-                            'conversions' => $conversions,
-                            'sync_status' => 'Synced',
-                            'sap_status' => 'Created',
-                            'sync_error' => null
-                        ]
-                    );
-                    $groupsSynced++;
+            try {
+                $groupResponse = null;
+                try {
+                    $groupResponse = $sap->get($user, 'UnitOfMeasurementGroups');
+                } catch (\Exception $ex) {
+                    $groupResponse = $sap->get($user, 'UnitOfMeasureGroups');
                 }
-                DB::commit();
+
+                if (isset($groupResponse['value']) && is_array($groupResponse['value'])) {
+                    DB::beginTransaction();
+                    foreach ($groupResponse['value'] as $grpData) {
+                        $grpCode = $grpData['Code'] ?? ($grpData['GroupCode'] ?? null);
+                        if (!$grpCode) continue;
+
+                        $conversions = [];
+                        if (isset($grpData['UoMGroupDefinitionCollection']) && is_array($grpData['UoMGroupDefinitionCollection'])) {
+                            foreach ($grpData['UoMGroupDefinitionCollection'] as $def) {
+                                $conversions[] = [
+                                    'alt_uom' => $def['AlternateUoM'] ?? null,
+                                    'base_qty' => $def['BaseQuantity'] ?? 1,
+                                    'alt_qty' => $def['AlternateQuantity'] ?? 1,
+                                ];
+                            }
+                        }
+
+                        UomGroup::updateOrCreate(
+                            ['group_code' => $grpCode],
+                            [
+                                'abs_entry' => $grpData['AbsEntry'] ?? null,
+                                'group_name' => $grpData['Name'] ?? ($grpData['GroupName'] ?? $grpCode),
+                                'base_uom' => $grpData['BaseUoM'] ?? null,
+                                'conversions' => $conversions,
+                                'sync_status' => 'Synced',
+                                'sap_status' => 'Created',
+                                'sync_error' => null
+                            ]
+                        );
+                        $groupsSynced++;
+                    }
+                    DB::commit();
+                }
+            } catch (\Exception $e) {
+                Log::warning("UoM Group Sync Warning: " . $e->getMessage());
             }
 
             SystemLog::logAction('sap', 'Synced UoMs', "Synced {$uomsSynced} UoMs and {$groupsSynced} UoM Groups.");
