@@ -54,3 +54,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-08-12 11:25**: fix: remove leftover uncommitted outer DB::beginTransaction() in ItemController causing items to be rolled back
 - **2026-08-12 11:30**: feat: add per_page dropdown selection (20, 50, 100) to Items, Business Partners, COA, and Taxes pages
 - **2026-08-12 11:47**: feat: add Item vs Service DocType, Dimensions & Cost Centers Master Data, Cost Center Line Integration, and fix Vendor selection JS
+- **2026-08-12 12:13**: feat: add all new master data pages to Roles & Access Control matrix and update Super Admin permissions
