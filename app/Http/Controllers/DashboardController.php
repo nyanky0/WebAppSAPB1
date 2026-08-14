@@ -55,8 +55,8 @@ class DashboardController extends Controller
 
         // 3. Purchase Requisitions Summary
         $prTotal = PurchaseRequest::count();
-        $prOpen = PurchaseRequest::where('status', 'open')->count();
-        $prDraft = PurchaseRequest::where('status', 'draft')->count();
+        $prOpen = PurchaseRequest::where('status', 'open')->orWhere(function($q) { $q->whereNull('status')->where('sync_status', 'Synced'); })->count();
+        $prDraft = PurchaseRequest::where('status', 'draft')->orWhere(function($q) { $q->whereNull('status')->where('sync_status', 'Draft'); })->count();
         $recentPRs = PurchaseRequest::latest()->take(5)->get();
 
         // 4. Purchase Quotations Summary
@@ -67,7 +67,7 @@ class DashboardController extends Controller
 
         // 5. Purchase Orders Summary
         $poTotal = PurchaseOrder::count();
-        $poOpen = PurchaseOrder::where('status', 'open')->count();
+        $poOpen = PurchaseOrder::where('sync_status', 'synced')->count();
         $poSynced = PurchaseOrder::where('sync_status', 'synced')->count();
         $recentPOs = PurchaseOrder::latest()->take(5)->get();
 

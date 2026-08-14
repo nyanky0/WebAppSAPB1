@@ -15,6 +15,9 @@ return new class extends Migration
             if (!Schema::hasColumn('purchase_requests', 'approval_status')) {
                 $table->string('approval_status')->default('none'); // 'none', 'pending', 'approved', 'rejected'
             }
+            if (!Schema::hasColumn('purchase_requests', 'status')) {
+                $table->string('status')->default('draft'); // 'draft', 'open', 'close', 'cancel'
+            }
         });
 
         Schema::table('purchase_request_lines', function (Blueprint $table) {
