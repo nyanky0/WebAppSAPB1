@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class PurchaseRequest extends Model
 {
     protected $fillable = [
-        'sap_number', 'doc_entry', 'doc_num', 'sync_status', 'sap_status', 'doc_type', 'document_date', 'valid_until', 'posting_date', 'required_date', 
-        'requester', 'vendor', 'whs_code', 'tax_code', 'sync_error', 'created_by'
+        'sap_number', 'doc_entry', 'doc_num', 'sync_status', 'sap_status', 'doc_type', 'document_date', 'valid_until', 'posting_date', 'delivery_date', 'required_date', 
+        'card_code', 'card_name', 'requester', 'vendor', 'whs_code', 'tax_code', 'urgency_level', 'status', 'approval_status', 'comments', 'sync_error', 'created_by'
     ];
 
     public function lines()

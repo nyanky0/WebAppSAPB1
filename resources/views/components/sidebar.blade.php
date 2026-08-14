@@ -188,8 +188,40 @@
                 </div>
             @endif
 
+            <!-- Folder: Approval -->
+            @if (in_array('Approval.Stages', $permissions) || in_array('Approval.Templates', $permissions) || in_array('Approval.Decisions', $permissions))
+                <div class="space-y-1 mt-1">
+                    <button
+                        @click="if (!sidebarOpen) { sidebarOpen = true; activeFolder = 'approval'; } else { activeFolder = activeFolder === 'approval' ? null : 'approval'; }"
+                        type="button"
+                        class="flex items-center w-full px-2 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-800 hover:text-white group focus:outline-none">
+                        <svg class="w-6 h-6 mr-3 text-gray-400 group-hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span x-show="sidebarOpen" class="flex-1 text-left">Approval</span>
+                        <svg x-show="sidebarOpen"
+                            :class="activeFolder === 'approval' ? 'rotate-90 text-gray-400' : 'text-gray-400'"
+                            class="w-5 h-5 ml-auto transition-colors duration-150 ease-in-out transform"
+                            viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                    <div x-show="activeFolder === 'approval' && sidebarOpen" x-collapse class="space-y-1">
+                        @if (in_array('Approval.Stages', $permissions))
+                            <a href="{{ route('approvals.stages.index') }}" class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Approval Stage</a>
+                        @endif
+                        @if (in_array('Approval.Templates', $permissions))
+                            <a href="{{ route('approvals.templates.index') }}" class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Approval Template</a>
+                        @endif
+                        @if (in_array('Approval.Decisions', $permissions))
+                            <a href="{{ route('approvals.decisions.index') }}" class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Approval Decision</a>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
             <!-- Folder: Transaction -->
-            @if (in_array('Purchase.PurchaseRequest', $permissions) || in_array('Purchase.PurchaseOrder', $permissions))
+            @if (in_array('Purchase.PurchaseRequest', $permissions) || in_array('Purchase.PurchaseQuotation', $permissions) || in_array('Purchase.PurchaseOrder', $permissions))
                 <div class="space-y-1 mt-1">
                     <button
                         @click="if (!sidebarOpen) { sidebarOpen = true; activeFolder = 'transaction'; } else { activeFolder = activeFolder === 'transaction' ? null : 'transaction'; }"
@@ -214,7 +246,11 @@
                     <div x-show="activeFolder === 'transaction' && sidebarOpen" x-collapse class="space-y-1">
                         @if (in_array('Purchase.PurchaseRequest', $permissions))
                             <a href="{{ route('purchase-request.index') }}"
-                                class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Purchase Request</a>
+                                class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Purchase Requisition</a>
+                        @endif
+                        @if (in_array('Purchase.PurchaseQuotation', $permissions))
+                            <a href="{{ route('purchase-quotation.index') }}"
+                                class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Purchase Quotation</a>
                         @endif
                         @if (in_array('Purchase.PurchaseOrder', $permissions))
                             <a href="{{ route('purchase-order.index') }}"

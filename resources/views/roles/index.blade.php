@@ -193,11 +193,37 @@
                                         <div class="ml-6 space-y-2">
                                             <div class="flex items-center">
                                                 <input type="checkbox" name="permissions[]" value="Purchase.PurchaseRequest" id="perm_purchase_pr" x-model="perms.purchase_pr" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                                                <label for="perm_purchase_pr" class="ml-2 block text-sm text-gray-700">Purchase Request</label>
+                                                <label for="perm_purchase_pr" class="ml-2 block text-sm text-gray-700">Purchase Requisition</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input type="checkbox" name="permissions[]" value="Purchase.PurchaseQuotation" id="perm_purchase_pq" x-model="perms.purchase_pq" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="perm_purchase_pq" class="ml-2 block text-sm text-gray-700">Purchase Quotation</label>
                                             </div>
                                             <div class="flex items-center">
                                                 <input type="checkbox" name="permissions[]" value="Purchase.PurchaseOrder" id="perm_purchase_po" x-model="perms.purchase_po" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
                                                 <label for="perm_purchase_po" class="ml-2 block text-sm text-gray-700">Purchase Order</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Approval Folder -->
+                                    <div class="border border-gray-200/80 rounded-lg p-4 bg-gray-50/60">
+                                        <div class="flex items-center mb-2">
+                                            <input type="checkbox" id="folder_approval" x-model="folderApproval" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                            <label for="folder_approval" class="ml-2 block text-sm font-semibold text-gray-900">Approval Folder</label>
+                                        </div>
+                                        <div class="ml-6 space-y-2">
+                                            <div class="flex items-center">
+                                                <input type="checkbox" name="permissions[]" value="Approval.Stages" id="perm_approval_stages" x-model="perms.approval_stages" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="perm_approval_stages" class="ml-2 block text-sm text-gray-700">Approval Stage</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input type="checkbox" name="permissions[]" value="Approval.Templates" id="perm_approval_templates" x-model="perms.approval_templates" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="perm_approval_templates" class="ml-2 block text-sm text-gray-700">Approval Template</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input type="checkbox" name="permissions[]" value="Approval.Decisions" id="perm_approval_decisions" x-model="perms.approval_decisions" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="perm_approval_decisions" class="ml-2 block text-sm text-gray-700">Approval Decision</label>
                                             </div>
                                         </div>
                                     </div>
@@ -246,7 +272,11 @@
                     scheduler_md: false,
                     scheduler_doc: false,
                     purchase_pr: false,
-                    purchase_po: false
+                    purchase_pq: false,
+                    purchase_po: false,
+                    approval_stages: false,
+                    approval_templates: false,
+                    approval_decisions: false
                 },
 
                 openAddModal() {
@@ -282,7 +312,11 @@
                     this.perms.scheduler_md = list.includes('Scheduler.MasterData');
                     this.perms.scheduler_doc = list.includes('Scheduler.Document');
                     this.perms.purchase_pr = list.includes('Purchase.PurchaseRequest');
+                    this.perms.purchase_pq = list.includes('Purchase.PurchaseQuotation');
                     this.perms.purchase_po = list.includes('Purchase.PurchaseOrder');
+                    this.perms.approval_stages = list.includes('Approval.Stages');
+                    this.perms.approval_templates = list.includes('Approval.Templates');
+                    this.perms.approval_decisions = list.includes('Approval.Decisions');
 
                     this.showModal = true;
                 },
@@ -310,7 +344,11 @@
                         scheduler_md: false,
                         scheduler_doc: false,
                         purchase_pr: false,
-                        purchase_po: false
+                        purchase_pq: false,
+                        purchase_po: false,
+                        approval_stages: false,
+                        approval_templates: false,
+                        approval_decisions: false
                     };
                 },
 
@@ -349,11 +387,21 @@
                 },
 
                 get folderPurchase() {
-                    return this.perms.purchase_pr && this.perms.purchase_po;
+                    return this.perms.purchase_pr && this.perms.purchase_pq && this.perms.purchase_po;
                 },
                 set folderPurchase(value) {
                     this.perms.purchase_pr = value;
+                    this.perms.purchase_pq = value;
                     this.perms.purchase_po = value;
+                },
+
+                get folderApproval() {
+                    return this.perms.approval_stages && this.perms.approval_templates && this.perms.approval_decisions;
+                },
+                set folderApproval(value) {
+                    this.perms.approval_stages = value;
+                    this.perms.approval_templates = value;
+                    this.perms.approval_decisions = value;
                 }
             }));
         });

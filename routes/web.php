@@ -88,12 +88,37 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/purchase-request', [\App\Http\Controllers\PurchaseRequestController::class, 'index'])->name('purchase-request.index');
     Route::get('/purchase-request/create', [\App\Http\Controllers\PurchaseRequestController::class, 'create'])->name('purchase-request.create');
+    Route::get('/purchase-request/{id}/duplicate', [\App\Http\Controllers\PurchaseRequestController::class, 'duplicate'])->name('purchase-request.duplicate');
     Route::post('/purchase-request', [\App\Http\Controllers\PurchaseRequestController::class, 'store'])->name('purchase-request.store');
     Route::get('/purchase-request/{id}', [\App\Http\Controllers\PurchaseRequestController::class, 'show'])->name('purchase-request.show');
+    Route::get('/api/items/{code}/stock', [\App\Http\Controllers\PurchaseRequestController::class, 'getItemStock'])->name('api.item-stock');
     Route::get('/api/sap/vendors', [\App\Http\Controllers\PurchaseRequestController::class, 'getVendors'])->name('api.vendors');
     Route::get('/api/sap/items', [\App\Http\Controllers\PurchaseRequestController::class, 'getItems'])->name('api.items');
     Route::get('/api/sap/accounts', [\App\Http\Controllers\PurchaseRequestController::class, 'getAccounts'])->name('api.accounts');
-    Route::get('/api/sap/series', [\App\Http\Controllers\PurchaseRequestController::class, 'getSeries'])->name('api.purchase-request.series');
+
+    // Purchase Quotations
+    Route::get('/purchase-quotation', [\App\Http\Controllers\PurchaseQuotationController::class, 'index'])->name('purchase-quotation.index');
+    Route::get('/purchase-quotation/create', [\App\Http\Controllers\PurchaseQuotationController::class, 'create'])->name('purchase-quotation.create');
+    Route::post('/purchase-quotation', [\App\Http\Controllers\PurchaseQuotationController::class, 'store'])->name('purchase-quotation.store');
+    Route::get('/purchase-quotation/{id}', [\App\Http\Controllers\PurchaseQuotationController::class, 'show'])->name('purchase-quotation.show');
+    Route::get('/api/requisitions/vendor-eligible', [\App\Http\Controllers\PurchaseQuotationController::class, 'getRequisitionsByVendor'])->name('api.requisitions.eligible');
+
+    // Approval Engine
+    Route::get('/approvals/stages', [\App\Http\Controllers\ApprovalStageController::class, 'index'])->name('approvals.stages.index');
+    Route::post('/approvals/stages', [\App\Http\Controllers\ApprovalStageController::class, 'store'])->name('approvals.stages.store');
+    Route::put('/approvals/stages/{id}', [\App\Http\Controllers\ApprovalStageController::class, 'update'])->name('approvals.stages.update');
+    Route::delete('/approvals/stages/{id}', [\App\Http\Controllers\ApprovalStageController::class, 'destroy'])->name('approvals.stages.destroy');
+
+    Route::get('/approvals/templates', [\App\Http\Controllers\ApprovalTemplateController::class, 'index'])->name('approvals.templates.index');
+    Route::get('/approvals/templates/create', [\App\Http\Controllers\ApprovalTemplateController::class, 'create'])->name('approvals.templates.create');
+    Route::post('/approvals/templates', [\App\Http\Controllers\ApprovalTemplateController::class, 'store'])->name('approvals.templates.store');
+    Route::get('/approvals/templates/{id}/edit', [\App\Http\Controllers\ApprovalTemplateController::class, 'edit'])->name('approvals.templates.edit');
+    Route::put('/approvals/templates/{id}', [\App\Http\Controllers\ApprovalTemplateController::class, 'update'])->name('approvals.templates.update');
+    Route::delete('/approvals/templates/{id}', [\App\Http\Controllers\ApprovalTemplateController::class, 'destroy'])->name('approvals.templates.destroy');
+
+    Route::get('/approvals/decisions', [\App\Http\Controllers\ApprovalDecisionController::class, 'index'])->name('approvals.decisions.index');
+    Route::get('/approvals/decisions/{id}', [\App\Http\Controllers\ApprovalDecisionController::class, 'show'])->name('approvals.decisions.show');
+    Route::post('/approvals/decisions/{id}/vote', [\App\Http\Controllers\ApprovalDecisionController::class, 'vote'])->name('approvals.decisions.vote');
 
     Route::get('/purchase-order', [\App\Http\Controllers\PurchaseOrderController::class, 'index'])->name('purchase-order.index');
     Route::get('/purchase-order/create', [\App\Http\Controllers\PurchaseOrderController::class, 'create'])->name('purchase-order.create');

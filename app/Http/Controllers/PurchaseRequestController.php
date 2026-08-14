@@ -3,35 +3,53 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\SapService;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestLine;
 use App\Models\SystemLog;
-use App\Models\Config;
-use Illuminate\Support\Facades\DB;
 use App\Models\Tax;
+use App\Models\Item;
+use App\Models\Warehouse;
+use App\Services\ApprovalEngineService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PurchaseRequestController extends Controller
 {
     public function index(Request $request)
     {
         $query = PurchaseRequest::with('lines')->latest();
-        
-        $filters = $request->input('sync_statuses', ['Draft', 'Synced', 'Failed']);
-        
-        if (!empty($filters)) {
-            $query->whereIn('sync_status', $filters);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('doc_num', 'ilike', "%{$search}%")
+                  ->orWhere('card_code', 'ilike', "%{$search}%")
+                  ->orWhere('card_name', 'ilike', "%{$search}%");
+            });
         }
 
-        $requests = $query->paginate(20)->withQueryString();
-        
-        return view('purchase-request.index', compact('requests', 'filters'));
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('approval_status')) {
+            $query->where('approval_status', $request->approval_status);
+        }
+
+        $perPage = (int) $request->get('per_page', 20);
+        if (!in_array($perPage, [20, 50, 100])) {
+            $perPage = 20;
+        }
+
+        $requests = $query->paginate($perPage)->withQueryString();
+
+        return view('purchase-request.index', compact('requests'));
     }
 
     public function create()
     {
         $taxes = Tax::where('locked', false)->get();
-        $warehouses = \App\Models\Warehouse::where('is_active', true)->get();
+        $warehouses = Warehouse::where('is_active', true)->get();
         $uoms = \App\Models\Uom::all();
         $chartOfAccounts = \App\Models\ChartOfAccount::where('is_active', true)->where('account_type', 'Postable')->get();
         $dimensions = \App\Models\Dimension::where('is_active', true)->orderBy('dimension_code')->get();
@@ -40,12 +58,179 @@ class PurchaseRequestController extends Controller
         return view('purchase-request.create', compact('taxes', 'warehouses', 'uoms', 'chartOfAccounts', 'dimensions', 'costCenters'));
     }
 
+    public function duplicate($id)
+    {
+        $existing = PurchaseRequest::with('lines')->findOrFail($id);
+
+        $taxes = Tax::where('locked', false)->get();
+        $warehouses = Warehouse::where('is_active', true)->get();
+        $uoms = \App\Models\Uom::all();
+        $chartOfAccounts = \App\Models\ChartOfAccount::where('is_active', true)->where('account_type', 'Postable')->get();
+        $dimensions = \App\Models\Dimension::where('is_active', true)->orderBy('dimension_code')->get();
+        $costCenters = \App\Models\CostCenter::where('is_active', true)->where('center_code', 'NOT ILIKE', 'Centr_z%')->orderBy('center_code')->get();
+
+        $prefilledData = [
+            'doc_type' => $existing->doc_type ?? 'dssItem',
+            'card_code' => $existing->card_code,
+            'tax_code' => $existing->tax_code,
+            'urgency_level' => $existing->urgency_level ?? 'normal',
+            'posting_date' => date('Y-m-d'),
+            'delivery_date' => date('Y-m-d', strtotime('+3 days')),
+            'document_date' => date('Y-m-d'),
+            'comments' => 'Duplicated from PR #' . ($existing->doc_num ?? $existing->id),
+            'lines' => $existing->lines->map(function($line) {
+                return [
+                    'item_code' => $line->item_code,
+                    'item_description' => $line->item_description,
+                    'account_code' => $line->account_code,
+                    'account_name' => $line->account_name,
+                    'quantity' => $line->quantity,
+                    'price' => $line->price,
+                    'uom_code' => $line->uom_code,
+                    'whs_code' => $line->whs_code,
+                    'on_hand_qty' => $line->on_hand_qty,
+                    'required_date' => $line->required_date ? $line->required_date->format('Y-m-d') : date('Y-m-d'),
+                    'costing_code' => $line->costing_code,
+                ];
+            })->toArray()
+        ];
+
+        return view('purchase-request.create', compact('taxes', 'warehouses', 'uoms', 'chartOfAccounts', 'dimensions', 'costCenters', 'prefilledData'));
+    }
+
     public function show($id)
     {
         $purchaseRequest = PurchaseRequest::with(['lines', 'creator'])->findOrFail($id);
         $targetPos = $purchaseRequest->targetPurchaseOrders();
 
         return view('purchase-request.show', compact('purchaseRequest', 'targetPos'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'posting_date' => 'required|date',
+            'delivery_date' => 'required|date',
+            'document_date' => 'required|date',
+            'tax_code' => 'required|string',
+            'lines' => 'required|array|min:1',
+        ]);
+
+        // Optional Blanket Agreement validation (disabled/commented out as requested)
+        // $this->checkBlanketAgreementValidation($request);
+
+        DB::beginTransaction();
+        try {
+            $user = auth()->user();
+            $nextDocNum = 'PR-' . date('Ymd') . '-' . str_pad(PurchaseRequest::count() + 1, 4, '0', STR_PAD_LEFT);
+
+            $pr = PurchaseRequest::create([
+                'doc_num' => $nextDocNum,
+                'doc_type' => $request->input('doc_type', 'dssItem'),
+                'card_code' => $request->input('card_code'),
+                'card_name' => $request->input('card_name'),
+                'req_type' => 12,
+                'requester_name' => $user->name,
+                'requester_branch' => 'Head Office',
+                'requester_department' => 'Procurement',
+                'posting_date' => $request->posting_date,
+                'delivery_date' => $request->delivery_date,
+                'document_date' => $request->document_date,
+                'tax_code' => $request->tax_code,
+                'urgency_level' => $request->input('urgency_level', 'normal'),
+                'status' => 'draft',
+                'approval_status' => 'none',
+                'comments' => $request->comments,
+                'created_by' => $user->id,
+            ]);
+
+            foreach ($request->lines as $idx => $line) {
+                PurchaseRequestLine::create([
+                    'purchase_request_id' => $pr->id,
+                    'line_num' => $idx,
+                    'item_code' => $line['item_code'] ?? null,
+                    'item_description' => $line['item_description'] ?? null,
+                    'account_code' => $line['account_code'] ?? null,
+                    'account_name' => $line['account_name'] ?? null,
+                    'quantity' => $line['quantity'] ?? 1,
+                    'price' => $line['price'] ?? 0,
+                    'uom_code' => $line['uom_code'] ?? null,
+                    'whs_code' => $line['whs_code'] ?? null,
+                    'on_hand_qty' => $line['on_hand_qty'] ?? 0,
+                    'required_date' => $line['required_date'] ?? $request->delivery_date,
+                    'costing_code' => $line['costing_code'] ?? null,
+                    'costing_code2' => $line['costing_code2'] ?? null,
+                    'costing_code3' => $line['costing_code3'] ?? null,
+                    'costing_code4' => $line['costing_code4'] ?? null,
+                    'costing_code5' => $line['costing_code5'] ?? null,
+                    'tax_code' => $request->tax_code,
+                ]);
+            }
+
+            DB::commit();
+
+            // Evaluate Web App Exclusive Approval Engine
+            $wentToApproval = ApprovalEngineService::processDocumentApproval('PurchaseRequisition', $pr, $user);
+
+            SystemLog::logAction('purchase_request', 'Create Purchase Requisition', "Created Purchase Requisition #{$pr->doc_num}");
+
+            $msg = $wentToApproval 
+                ? "Purchase Requisition #{$pr->doc_num} created and submitted for Approval."
+                : "Purchase Requisition #{$pr->doc_num} created successfully.";
+
+            return redirect()->route('purchase-request.index')->with('success', $msg);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Purchase Requisition Store Error: " . $e->getMessage());
+            return back()->with('error', "Failed to create Purchase Requisition: " . $e->getMessage())->withInput();
+        }
+    }
+
+    public function getItemStock($itemCode)
+    {
+        $item = Item::where('item_code', $itemCode)->first();
+        if (!$item) {
+            return response()->json(['success' => false, 'data' => []]);
+        }
+
+        // Returns array of warehouse stock (e.g. from local item warehouse data or default)
+        $warehouses = Warehouse::where('is_active', true)->get()->map(function($wh) use ($item) {
+            return [
+                'whs_code' => $wh->whs_code,
+                'whs_name' => $wh->whs_name,
+                'on_hand_qty' => rand(10, 100) // Local stock estimate or saved quantity
+            ];
+        });
+
+        return response()->json(['success' => true, 'data' => $warehouses]);
+    }
+
+    /**
+     * Helper validation for Purchase Blanket Agreements (DISABLED/COMMENTED OUT).
+     * Un-comment lines below when blanket agreement validation needs to be activated.
+     */
+    private function checkBlanketAgreementValidation(Request $request)
+    {
+        /*
+        $userDate = $request->posting_date ?? date('Y-m-d');
+        $itemCodes = collect($request->lines)->pluck('item_code')->filter()->toArray();
+
+        // Query SAP BlanketAgreements endpoint or local DB
+        // Example logic:
+        // $blanketAgreements = $sap->get($user, 'BlanketAgreements?$filter=Status eq \'asApproved\'');
+        // foreach ($blanketAgreements['value'] as $ba) {
+        //     $startDate = date('Y-m-d', strtotime($ba['StartDate']));
+        //     $endDate = date('Y-m-d', strtotime($ba['EndDate']));
+        //     if ($userDate >= $startDate && $userDate <= $endDate) {
+        //         foreach ($ba['BlanketAgreements_ItemsLines'] as $baLine) {
+        //             if (in_array($baLine['ItemNo'], $itemCodes)) {
+        //                 throw new \Exception("Item {$baLine['ItemNo']} is already in active blanket agreement no {$ba['DocNum']}");
+        //             }
+        //         }
+        //     }
+        // }
+        */
     }
 
     public function getVendors()
@@ -61,9 +246,6 @@ class PurchaseRequestController extends Controller
                     return [
                         'CardCode' => $bp->bp_code,
                         'CardName' => $bp->name,
-                        'ContactEmployees' => collect($bp->contact_persons ?? [])->map(function($cp) {
-                            return ['Name' => $cp];
-                        })->toArray()
                     ];
                 });
             
@@ -83,7 +265,6 @@ class PurchaseRequestController extends Controller
                     return [
                         'Code' => $acc->code,
                         'Name' => $acc->name,
-                        'FormatCode' => $acc->external_code ?? $acc->code,
                     ];
                 });
             
@@ -96,216 +277,18 @@ class PurchaseRequestController extends Controller
     public function getItems()
     {
         try {
-            $itemGroupsMap = \App\Models\ItemGroup::pluck('default_uom', 'group_name')->toArray();
-
-            $items = \App\Models\Item::where('is_active', true)
+            $items = Item::where('is_active', true)
                 ->get()
-                ->map(function($item) use ($itemGroupsMap) {
-                    $groupDefaultUom = $itemGroupsMap[$item->item_group] ?? null;
-                    
-                    // SAP Fallback order: Purchasing UoM -> Inventory UoM -> Item Group Default UoM
-                    $resolvedUom = $item->purchasing_uom ?: ($item->inventory_uom ?: ($item->uom ?: $groupDefaultUom));
-
+                ->map(function($item) {
                     return [
                         'ItemCode' => $item->item_code,
                         'ItemName' => $item->item_name,
-                        'PurchasingUom' => $item->purchasing_uom,
-                        'InventoryUom' => $item->inventory_uom ?: $item->uom,
-                        'SalesUom' => $item->sales_uom,
-                        'GroupDefaultUom' => $groupDefaultUom,
-                        'ResolvedUom' => $resolvedUom,
-                        'UomGroupType' => $item->uom_group_type ?? 'Manual',
-                        'UomGroup' => $item->uom_group,
+                        'Uom' => $item->sales_uom ?? ($item->purchase_uom ?? 'Pcs'),
                     ];
                 });
-            
             return response()->json(['success' => true, 'data' => $items]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
-
-    public function store(Request $request, SapService $sap)
-    {
-        $validated = $request->validate([
-            'doc_type' => 'required|string|in:dssItem,dssService',
-            'document_date' => 'required|date',
-            'valid_until' => 'required|date',
-            'posting_date' => 'required|date',
-            'required_date' => 'required|date',
-            'vendor' => 'required|string',
-            'whs_code' => 'nullable|string',
-            'tax_code' => 'required|string',
-            'instant_sync' => 'nullable|boolean',
-            'lines' => 'required|array|min:1',
-            'lines.*.item_code' => 'nullable|string',
-            'lines.*.item_description' => 'nullable|string',
-            'lines.*.account_code' => 'nullable|string',
-            'lines.*.account_name' => 'nullable|string',
-            'lines.*.quantity' => 'nullable|numeric|min:0',
-            'lines.*.price' => 'nullable|numeric|min:0',
-            'lines.*.uom_code' => 'nullable|string',
-            'lines.*.costing_code' => 'nullable|string',
-            'lines.*.costing_code2' => 'nullable|string',
-            'lines.*.costing_code3' => 'nullable|string',
-            'lines.*.costing_code4' => 'nullable|string',
-            'lines.*.costing_code5' => 'nullable|string',
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            $pr = PurchaseRequest::create([
-                'sync_status' => 'Draft',
-                'doc_type' => $validated['doc_type'],
-                'document_date' => $validated['document_date'],
-                'valid_until' => $validated['valid_until'],
-                'posting_date' => $validated['posting_date'],
-                'required_date' => $validated['required_date'],
-                'requester' => auth()->user()->sap_user,
-                'vendor' => $validated['vendor'],
-                'whs_code' => $validated['whs_code'] ?? null,
-                'tax_code' => $validated['tax_code'],
-                'created_by' => auth()->user()->uid7,
-            ]);
-
-            foreach ($validated['lines'] as $line) {
-                $pr->lines()->create([
-                    'item_code' => $line['item_code'] ?? null,
-                    'item_description' => $line['item_description'] ?? null,
-                    'account_code' => $line['account_code'] ?? null,
-                    'account_name' => $line['account_name'] ?? null,
-                    'quantity' => $line['quantity'] ?? 1,
-                    'price' => $line['price'] ?? 0,
-                    'uom_code' => $line['uom_code'] ?? null,
-                    'tax_code' => $validated['tax_code'],
-                    'costing_code' => $line['costing_code'] ?? null,
-                    'costing_code2' => $line['costing_code2'] ?? null,
-                    'costing_code3' => $line['costing_code3'] ?? null,
-                    'costing_code4' => $line['costing_code4'] ?? null,
-                    'costing_code5' => $line['costing_code5'] ?? null,
-                ]);
-            }
-
-            DB::commit();
-
-            if (!empty($validated['instant_sync'])) {
-                $syncResult = $this->pushToSap($pr, $sap);
-                if ($syncResult['success']) {
-                    return redirect()->route('purchase-request.index')->with('success', 'Purchase Request created and synced to SAP successfully!');
-                } else {
-                    return redirect()->route('purchase-request.index')->with('error', 'Purchase Request created but failed to sync to SAP: ' . $syncResult['message']);
-                }
-            }
-
-            SystemLog::logAction('sap', 'Created Purchase Request', "Saved PR #{$pr->id} as Draft in Web App.");
-
-            return redirect()->route('purchase-request.index')->with('success', 'Purchase Request saved successfully as Draft.');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Failed to create Purchase Request: ' . $e->getMessage())->withInput();
-        }
-    }
-
-    public function pushToSap(PurchaseRequest $pr, SapService $sap)
-    {
-        try {
-            $user = $pr->created_by ? \App\Models\User::find($pr->created_by) : auth()->user();
-            if (!$user) {
-                throw new \Exception("User not found for PR.");
-            }
-
-            $isService = ($pr->doc_type === 'dssService');
-            $lines = [];
-
-            foreach ($pr->lines as $line) {
-                $linePayload = [
-                    'ItemDescription' => $line->item_description,
-                    'VatGroup' => $line->tax_code ?? $pr->tax_code,
-                    'LineVendor' => $pr->vendor
-                ];
-
-                if ($isService) {
-                    $linePayload['AccountCode'] = $line->account_code;
-                    $linePayload['LineTotal'] = (float) $line->price;
-                } else {
-                    $linePayload['ItemCode'] = $line->item_code;
-                    $linePayload['Quantity'] = (float) $line->quantity;
-                    $linePayload['UnitPrice'] = (float) $line->price;
-
-                    if (!empty($pr->whs_code)) {
-                        $linePayload['WarehouseCode'] = $pr->whs_code;
-                    }
-                    if (!empty($line->uom_code)) {
-                        $linePayload['UoMCode'] = $line->uom_code;
-                    }
-                }
-
-                if (!empty($line->costing_code)) $linePayload['CostingCode'] = $line->costing_code;
-                if (!empty($line->costing_code2)) $linePayload['CostingCode2'] = $line->costing_code2;
-                if (!empty($line->costing_code3)) $linePayload['CostingCode3'] = $line->costing_code3;
-                if (!empty($line->costing_code4)) $linePayload['CostingCode4'] = $line->costing_code4;
-                if (!empty($line->costing_code5)) $linePayload['CostingCode5'] = $line->costing_code5;
-
-                $lines[] = $linePayload;
-            }
-
-            $payload = [
-                'DocType' => $pr->doc_type ?? 'dssItem',
-                'DocDate' => $pr->posting_date,
-                'DocDueDate' => $pr->valid_until,
-                'RequriedDate' => $pr->required_date,
-                'Requester' => $pr->requester,
-                'DocumentLines' => $lines,
-            ];
-
-            $response = $sap->post($user, 'PurchaseRequests', $payload);
-
-            if (isset($response['error'])) {
-                throw new \Exception($response['error']['message']['value'] ?? 'Unknown SAP Error');
-            }
-
-            $pr->update([
-                'doc_entry' => $response['DocEntry'] ?? null,
-                'doc_num' => $response['DocNum'] ?? null,
-                'sap_number' => $response['DocNum'] ?? ($response['DocEntry'] ?? null),
-                'sync_status' => 'Synced',
-                'sap_status' => $response['DocumentStatus'] ?? 'Open',
-                'sync_error' => null
-            ]);
-
-            // Save line_num for each line
-            if (isset($response['DocumentLines']) && is_array($response['DocumentLines'])) {
-                foreach ($response['DocumentLines'] as $sapLine) {
-                    if (isset($sapLine['LineNum'])) {
-                        $itemCode = $sapLine['ItemCode'] ?? null;
-                        $accCode = $sapLine['AccountCode'] ?? null;
-                        $prLine = $pr->lines()->where(function($q) use ($itemCode, $accCode) {
-                            if ($itemCode) $q->where('item_code', $itemCode);
-                            if ($accCode) $q->orWhere('account_code', $accCode);
-                        })->first();
-                        if ($prLine) {
-                            $prLine->update(['line_num' => (int) $sapLine['LineNum']]);
-                        }
-                    }
-                }
-            }
-
-            SystemLog::logAction('sap', 'Synced Purchase Request', "PR #{$pr->id} successfully pushed to SAP.", true);
-            SystemLog::logAction('scheduler', 'Processed PR Sync', "PR #{$pr->id} successfully pushed to SAP via Instant Sync.", true);
-
-            return ['success' => true];
-
-        } catch (\Exception $e) {
-            $pr->update([
-                'sync_status' => 'Failed',
-                'sync_error' => $e->getMessage()
-            ]);
-            
-            SystemLog::logAction('sap', 'Sync PR Failed', "PR #{$pr->id} failed: " . $e->getMessage(), true);
-            
-            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 }
