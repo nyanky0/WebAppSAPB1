@@ -46,9 +46,9 @@ class SchedulerController extends Controller
     {
         $statuses = $request->input('statuses', ['Draft', 'Failed']);
         
-        $purchaseRequests = PurchaseRequest::with('lines')->whereIn('sync_status', $statuses)->latest()->get();
+        $purchaseOrders = PurchaseOrder::with('lines')->whereIn('sync_status', $statuses)->latest()->get();
 
-        return view('scheduler.document', compact('purchaseRequests', 'statuses'));
+        return view('scheduler.document', compact('purchaseOrders', 'statuses'));
     }
     
     public function syncNow(Request $request)
@@ -66,9 +66,9 @@ class SchedulerController extends Controller
             
             $sap = new SapService($config);
             
-            if ($type === 'PurchaseRequest') {
-                $model = PurchaseRequest::findOrFail($id);
-                $controller = new \App\Http\Controllers\PurchaseRequestController();
+            if ($type === 'PurchaseOrder') {
+                $model = PurchaseOrder::findOrFail($id);
+                $controller = new \App\Http\Controllers\PurchaseOrderController();
                 $controller->pushToSap($model, $sap);
             } elseif ($type === 'Item') {
                 $model = Item::findOrFail($id);

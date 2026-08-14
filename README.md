@@ -70,3 +70,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-08-14 11:29**: fix: resolve Approval Stage modal backdrop, format terms into horizontal table list, and add customizable per-user dashboard
 - **2026-08-14 11:32**: fix: correct namespace syntax backslash in DashboardController.php
 - **2026-08-14 11:34**: fix: add status column to purchase_requests migration and safely query metrics in DashboardController
+- **2026-08-14 11:36**: feat: redesign dashboard widgets into SAP B1 HANA Fiori modular box-by-box grid cards

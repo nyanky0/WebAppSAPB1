@@ -61,39 +61,39 @@
             </form>
         </div>
 
-        @if($purchaseRequests->isEmpty())
+        @if($purchaseOrders->isEmpty())
             <div class="rounded-lg bg-white p-12 text-center shadow ring-1 ring-black ring-opacity-5">
                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <h3 class="mt-2 text-sm font-semibold text-gray-900">No documents found</h3>
-                <p class="mt-1 text-sm text-gray-500">There are no transaction documents matching your selected status filters.</p>
+                <p class="mt-1 text-sm text-gray-500">There are no Purchase Orders matching your selected status filters.</p>
             </div>
         @else
             <div class="space-y-8">
                 <div>
-                    <h2 class="text-lg font-semibold text-gray-900 mb-2">Purchase Requests ({{ $purchaseRequests->count() }})</h2>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-2">Purchase Orders ({{ $purchaseOrders->count() }})</h2>
                     <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
                         <table class="min-w-full divide-y divide-gray-300">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">ID / SAP #</th>
+                                    <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">PO # / SAP #</th>
                                     <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Vendor</th>
-                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Requester</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Posting Date</th>
                                     <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Total Items</th>
-                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Sync Status</th>
                                     <th class="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">Action</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 bg-white">
-                                @foreach($purchaseRequests as $row)
+                                @foreach($purchaseOrders as $row)
                                 <tr>
-                                    <td class="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-900">
-                                        #{{ $row->id }} <span class="text-gray-400">/</span> {{ $row->sap_number ?? 'N/A' }}
+                                    <td class="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-900 font-mono">
+                                        #{{ $row->doc_num ?? $row->id }} <span class="text-gray-400">/</span> {{ $row->sap_number ?? 'N/A' }}
                                     </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $row->vendor }}</td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $row->requester }}</td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $row->lines->count() }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900 font-medium">{{ $row->card_name }} ({{ $row->card_code }})</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ \Carbon\Carbon::parse($row->posting_date)->format('Y-m-d') }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 font-mono">{{ $row->lines->count() }}</td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                         <x-sync-status :status="$row->sync_status" :error="$row->sync_error" />
                                     </td>
@@ -101,7 +101,7 @@
                                         @if($row->sync_status !== 'Synced')
                                         <form action="{{ route('scheduler.sync-now') }}" method="POST">
                                             @csrf
-                                            <input type="hidden" name="type" value="PurchaseRequest">
+                                            <input type="hidden" name="type" value="PurchaseOrder">
                                             <input type="hidden" name="id" value="{{ $row->id }}">
                                             <button type="submit" class="text-indigo-600 hover:text-indigo-900">Sync Now</button>
                                         </form>
