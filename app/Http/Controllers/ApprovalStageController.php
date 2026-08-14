@@ -29,7 +29,7 @@ class ApprovalStageController extends Controller
             'description' => $request->description,
             'min_approvals' => $request->min_approvals,
             'min_rejections' => $request->min_rejections,
-            'approver_user_ids' => array_map('intval', $request->approver_user_ids),
+            'approver_user_ids' => array_map('strval', $request->approver_user_ids),
         ]);
 
         return redirect()->route('approvals.stages.index')->with('success', 'Approval Stage created successfully.');
@@ -50,7 +50,7 @@ class ApprovalStageController extends Controller
             'description' => $request->description,
             'min_approvals' => $request->min_approvals,
             'min_rejections' => $request->min_rejections,
-            'approver_user_ids' => array_map('intval', $request->approver_user_ids),
+            'approver_user_ids' => array_map('strval', $request->approver_user_ids),
         ]);
 
         return redirect()->route('approvals.stages.index')->with('success', 'Approval Stage updated successfully.');

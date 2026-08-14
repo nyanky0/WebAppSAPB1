@@ -66,3 +66,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-08-12 15:35**: feat: add start.bat, stop.bat, and app-control.bat scripts to manage application lifecycle
 - **2026-08-12 15:48**: fix: reduce login page logo sizes and add WSL support to start/stop batch scripts
 - **2026-08-14 10:15**: feat: add SAP Branches (b1s/v2/Branches) Master Data module with sync, status filters, and role permissions
+- **2026-08-14 11:16**: feat: add Approval Engine, Purchase Requisition redesign with Duplicate & stock tracking, Purchase Quotations, and logo resize

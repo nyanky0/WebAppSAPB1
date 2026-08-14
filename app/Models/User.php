@@ -10,7 +10,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
-#[Fillable(['uid7', 'name', 'username', 'password', 'debug_mode', 'sap_user', 'sap_password', 'role_id', 'created_by', 'updated_by'])]
+#[Fillable(['uid7', 'name', 'username', 'password', 'debug_mode', 'sap_user', 'sap_password', 'role_id', 'dashboard_widgets', 'created_by', 'updated_by'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -20,6 +20,11 @@ class User extends Authenticatable
     protected $primaryKey = 'uid7';
     public $incrementing = false;
     protected $keyType = 'string';
+
+    protected $casts = [
+        'dashboard_widgets' => 'array',
+        'debug_mode' => 'boolean',
+    ];
 
     public function newUniqueId()
     {

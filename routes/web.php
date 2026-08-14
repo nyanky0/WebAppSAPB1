@@ -24,6 +24,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/dashboard/widgets', [DashboardController::class, 'updateWidgets'])->name('dashboard.widgets');
 
     Route::get('/config/missing', function() {
         return view('config.missing');

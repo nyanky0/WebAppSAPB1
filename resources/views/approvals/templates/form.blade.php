@@ -43,8 +43,8 @@
                         <div class="max-h-36 overflow-y-auto border rounded-md p-3 space-y-2 bg-gray-50">
                             @foreach($users as $u)
                                 <label class="flex items-center text-sm">
-                                    <input type="checkbox" name="originator_user_ids[]" value="{{ $u->id }}" x-model="originatorUserIds" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                    <span class="ml-2 text-gray-800">{{ $u->name }}</span>
+                                    <input type="checkbox" name="originator_user_ids[]" value="{{ $u->uid7 }}" x-model="originatorUserIds" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    <span class="ml-2 text-gray-800">{{ $u->name }} ({{ $u->username }})</span>
                                 </label>
                             @endforeach
                         </div>
@@ -91,7 +91,7 @@
                 </div>
             </div>
 
-            <!-- Approval Terms / Conditions Section -->
+            <!-- Approval Terms / Conditions Section (Horizontal Table Layout) -->
             <div class="bg-white shadow rounded-lg p-6 mb-6">
                 <h3 class="text-base font-semibold text-gray-900 mb-2">Approval Terms & Conditions</h3>
                 
@@ -108,44 +108,54 @@
 
                 <div x-show="termsType === 'conditional'">
                     <div class="flex items-center justify-between mb-3">
-                        <p class="text-xs text-gray-500">Define criteria when this approval template should be triggered (Minimum 1 term).</p>
-                        <button type="button" @click="addTerm()" class="inline-flex items-center text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded hover:bg-indigo-100">+ Add Term</button>
+                        <p class="text-xs text-gray-500">Define terms when this template triggers. Minimum 1 term required.</p>
+                        <button type="button" @click="addTerm()" class="inline-flex items-center text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded hover:bg-indigo-100">+ Add Term Row</button>
                     </div>
 
-                    <div class="space-y-3">
-                        <template x-for="(term, index) in terms" :key="index">
-                            <div class="grid grid-cols-12 gap-3 items-center bg-gray-50 p-3 rounded-md border border-gray-200">
-                                <div class="col-span-3">
-                                    <select :name="'terms['+index+'][target_level]'" x-model="term.target_level" class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500 focus:border-indigo-500">
-                                        <option value="header">Header Level</option>
-                                        <option value="detail">Detail Line Level (Total Sum)</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-span-3">
-                                    <input type="text" :name="'terms['+index+'][field_name]'" x-model="term.field_name" placeholder="Field Name (e.g. price, quantity)" class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500 focus:border-indigo-500">
-                                </div>
-
-                                <div class="col-span-2">
-                                    <select :name="'terms['+index+'][operator]'" x-model="term.operator" class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500 focus:border-indigo-500">
-                                        <option value="=">=</option>
-                                        <option value=">">&gt;</option>
-                                        <option value=">=">&gt;=</option>
-                                        <option value="<">&lt;</option>
-                                        <option value="<=">&lt;=</option>
-                                        <option value="!=">!=</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-span-3">
-                                    <input type="text" :name="'terms['+index+'][value]'" x-model="term.value" placeholder="Target Value" class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500 focus:border-indigo-500">
-                                </div>
-
-                                <div class="col-span-1 text-center">
-                                    <button type="button" @click="removeTerm(index)" :disabled="terms.length <= 1" class="text-red-500 hover:text-red-700 text-xs font-bold disabled:opacity-30">Trash</button>
-                                </div>
-                            </div>
-                        </template>
+                    <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="py-3 px-3 text-left text-xs font-semibold text-gray-700 uppercase min-w-[180px]">Target Level</th>
+                                    <th scope="col" class="py-3 px-3 text-left text-xs font-semibold text-gray-700 uppercase min-w-[200px]">Field Name</th>
+                                    <th scope="col" class="py-3 px-3 text-left text-xs font-semibold text-gray-700 uppercase min-w-[120px]">Operator</th>
+                                    <th scope="col" class="py-3 px-3 text-left text-xs font-semibold text-gray-700 uppercase min-w-[200px]">Target Value</th>
+                                    <th scope="col" class="py-3 px-3 text-center text-xs font-semibold text-gray-700 uppercase w-20">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white">
+                                <template x-for="(term, index) in terms" :key="index">
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="p-2">
+                                            <select :name="'terms['+index+'][target_level]'" x-model="term.target_level" class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500">
+                                                <option value="header">Header Level</option>
+                                                <option value="detail">Detail Line Level (Total Sum)</option>
+                                            </select>
+                                        </td>
+                                        <td class="p-2">
+                                            <input type="text" :name="'terms['+index+'][field_name]'" x-model="term.field_name" placeholder="Field (e.g. price, urgency_level)" class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500 font-mono">
+                                        </td>
+                                        <td class="p-2">
+                                            <select :name="'terms['+index+'][operator]'" x-model="term.operator" class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500 font-bold">
+                                                <option value="=">=</option>
+                                                <option value=">">&gt;</option>
+                                                <option value=">=">&gt;=</option>
+                                                <option value="<">&lt;</option>
+                                                <option value="<=">&lt;=</option>
+                                                <option value="!=">!=</option>
+                                                <option value="contains">contains</option>
+                                            </select>
+                                        </td>
+                                        <td class="p-2">
+                                            <input type="text" :name="'terms['+index+'][value]'" x-model="term.value" placeholder="Target Value (e.g. 500000, high)" class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500">
+                                        </td>
+                                        <td class="p-2 text-center">
+                                            <button type="button" @click="removeTerm(index)" :disabled="terms.length <= 1" class="text-red-500 hover:text-red-700 text-xs font-bold disabled:opacity-30">Trash</button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

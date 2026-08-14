@@ -40,7 +40,7 @@ class ApprovalTemplateController extends Controller
                 'description' => $request->description,
                 'is_active' => $request->has('is_active'),
                 'target_document' => $request->target_document,
-                'originator_user_ids' => $request->filled('originator_user_ids') ? array_map('intval', $request->originator_user_ids) : [],
+                'originator_user_ids' => $request->filled('originator_user_ids') ? array_map('strval', $request->originator_user_ids) : [],
                 'terms_type' => $request->terms_type,
             ]);
 

@@ -58,10 +58,11 @@
         </div>
 
         <!-- Add/Edit Modal -->
-        <div x-show="showModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+        <div x-show="showModal" x-cloak class="fixed inset-0 z-[100] overflow-y-auto" style="display: none;">
             <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeModal()"></div>
-                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full p-6">
+                <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="closeModal()"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <div class="relative inline-block align-middle bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full p-6 z-10">
                     <h3 class="text-lg font-bold text-gray-900 mb-4" x-text="editMode ? 'Edit Approval Stage' : 'Add Approval Stage'"></h3>
                     
                     <form :action="formAction" method="POST">
@@ -97,8 +98,8 @@
                                 <div class="max-h-40 overflow-y-auto border rounded-md p-3 space-y-2 bg-gray-50">
                                     @foreach($users as $u)
                                         <label class="flex items-center text-sm">
-                                            <input type="checkbox" name="approver_user_ids[]" value="{{ $u->id }}" x-model="selectedUserIds" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                            <span class="ml-2 text-gray-800">{{ $u->name }} ({{ $u->email }})</span>
+                                            <input type="checkbox" name="approver_user_ids[]" value="{{ $u->uid7 }}" x-model="selectedUserIds" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                            <span class="ml-2 text-gray-800">{{ $u->name }} ({{ $u->username }})</span>
                                         </label>
                                     @endforeach
                                 </div>
