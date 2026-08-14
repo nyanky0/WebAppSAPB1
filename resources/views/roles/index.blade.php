@@ -156,6 +156,10 @@
                                                 <label for="perm_master_wtaxes" class="ml-2 block text-sm text-gray-700">Withholding Taxes</label>
                                             </div>
                                             <div class="flex items-center">
+                                                <input type="checkbox" name="permissions[]" value="Administrator.Branches" id="perm_master_branches" x-model="perms.master_branches" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="perm_master_branches" class="ml-2 block text-sm text-gray-700">Branches</label>
+                                            </div>
+                                            <div class="flex items-center">
                                                 <input type="checkbox" name="permissions[]" value="Administrator.BusinessPartners" id="perm_master_bp" x-model="perms.master_bp" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
                                                 <label for="perm_master_bp" class="ml-2 block text-sm text-gray-700">Business Partners</label>
                                             </div>
@@ -237,6 +241,7 @@
                     master_costcenters: false,
                     master_taxes: false,
                     master_wtaxes: false,
+                    master_branches: false,
                     master_bp: false,
                     scheduler_md: false,
                     scheduler_doc: false,
@@ -272,6 +277,7 @@
                     this.perms.master_costcenters = list.includes('Administrator.CostCenters');
                     this.perms.master_taxes = list.includes('Administrator.Taxes');
                     this.perms.master_wtaxes = list.includes('Administrator.WithholdingTaxes');
+                    this.perms.master_branches = list.includes('Administrator.Branches');
                     this.perms.master_bp = list.includes('Administrator.BusinessPartners');
                     this.perms.scheduler_md = list.includes('Scheduler.MasterData');
                     this.perms.scheduler_doc = list.includes('Scheduler.Document');
@@ -299,6 +305,7 @@
                         master_costcenters: false,
                         master_taxes: false,
                         master_wtaxes: false,
+                        master_branches: false,
                         master_bp: false,
                         scheduler_md: false,
                         scheduler_doc: false,
@@ -318,7 +325,7 @@
                 },
 
                 get folderMaster() {
-                    return this.perms.master_items && this.perms.master_uoms && this.perms.master_warehouses && this.perms.master_coa && this.perms.master_dimensions && this.perms.master_costcenters && this.perms.master_taxes && this.perms.master_wtaxes && this.perms.master_bp;
+                    return this.perms.master_items && this.perms.master_uoms && this.perms.master_warehouses && this.perms.master_coa && this.perms.master_dimensions && this.perms.master_costcenters && this.perms.master_taxes && this.perms.master_wtaxes && this.perms.master_branches && this.perms.master_bp;
                 },
                 set folderMaster(value) {
                     this.perms.master_items = value;
@@ -329,6 +336,7 @@
                     this.perms.master_costcenters = value;
                     this.perms.master_taxes = value;
                     this.perms.master_wtaxes = value;
+                    this.perms.master_branches = value;
                     this.perms.master_bp = value;
                 },
 

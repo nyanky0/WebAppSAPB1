@@ -82,6 +82,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/withholding-taxes', [\App\Http\Controllers\WithholdingTaxController::class, 'index'])->name('withholding-taxes.index');
     Route::post('/withholding-taxes/sync', [\App\Http\Controllers\WithholdingTaxController::class, 'sync'])->name('withholding-taxes.sync');
+
+    Route::get('/branches', [\App\Http\Controllers\BranchController::class, 'index'])->name('branches.index');
+    Route::post('/branches/sync', [\App\Http\Controllers\BranchController::class, 'sync'])->name('branches.sync');
     
     Route::get('/purchase-request', [\App\Http\Controllers\PurchaseRequestController::class, 'index'])->name('purchase-request.index');
     Route::get('/purchase-request/create', [\App\Http\Controllers\PurchaseRequestController::class, 'create'])->name('purchase-request.create');
