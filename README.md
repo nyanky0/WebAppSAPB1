@@ -69,3 +69,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-08-14 11:16**: feat: add Approval Engine, Purchase Requisition redesign with Duplicate & stock tracking, Purchase Quotations, and logo resize
 - **2026-08-14 11:29**: fix: resolve Approval Stage modal backdrop, format terms into horizontal table list, and add customizable per-user dashboard
 - **2026-08-14 11:32**: fix: correct namespace syntax backslash in DashboardController.php
+- **2026-08-14 11:34**: fix: add status column to purchase_requests migration and safely query metrics in DashboardController
