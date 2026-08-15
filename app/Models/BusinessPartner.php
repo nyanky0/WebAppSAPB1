@@ -8,8 +8,16 @@ class BusinessPartner extends Model
 {
     protected $fillable = [
         'bp_code',
+        'card_code',
         'name',
+        'card_name',
+        'bp_name',
+        'card_type',
         'type',
+        'group_code',
+        'phone1',
+        'email',
+        'currency',
         'contact_persons',
         'sync_status',
         'sap_status',

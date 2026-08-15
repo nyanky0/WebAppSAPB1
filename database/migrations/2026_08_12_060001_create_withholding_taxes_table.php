@@ -14,7 +14,9 @@ return new class extends Migration
         Schema::create('withholding_taxes', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
+            $table->string('wt_code')->nullable();
             $table->string('name')->nullable();
+            $table->string('wt_name')->nullable();
             $table->decimal('rate', 10, 4)->default(0);
             $table->string('category')->nullable();
             $table->string('gl_account')->nullable();

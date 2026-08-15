@@ -117,7 +117,7 @@
 }"
 @open-sync-all-modal.window="startSyncAll()">
 
-    <!-- Solid Dark Backdrop -->
+    <!-- Solid Dark Overlay Backdrop -->
     <div x-show="showModal" 
          x-transition:enter="ease-out duration-200"
          x-transition:enter-start="opacity-0"
@@ -125,19 +125,18 @@
          x-transition:leave="ease-in duration-150"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 overflow-y-auto bg-black/60 flex items-center justify-center p-4">
+         class="fixed inset-0 z-50 overflow-y-auto bg-black/70 flex items-center justify-center p-4">
         
-        <!-- Windows 11 Solid Modal Frame -->
+        <!-- Windows 11 Solid White Modal Frame -->
         <div class="relative w-full max-w-md bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden transform transition-all"
              @click.outside="if (!isSyncing) showModal = false">
             
-            <!-- Window Titlebar Header (Light Slate with Explicit Dark Title Text) -->
+            <!-- Window Titlebar Header (Light Slate with Explicit Dark Slate Text) -->
             <div class="px-4 py-3 bg-slate-100 border-b border-slate-200 flex items-center justify-between">
                 <div class="flex items-center space-x-2">
                     <svg class="w-4 h-4 text-indigo-600" :class="isSyncing ? 'animate-spin' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    <!-- Point 5: Explicit dark slate modal title color -->
                     <h3 class="text-sm font-extrabold tracking-tight" style="color: #0f172a !important;">Sync Everything From SAP</h3>
                     <span class="text-[11px] text-slate-500 font-normal">| Master Data</span>
                 </div>
@@ -225,12 +224,12 @@
                     </template>
                 </div>
 
-                <!-- Point 1: Synchronization Activity Log Terminal (Exact Max 6 Lines Height 120px) -->
+                <!-- Synchronization Activity Log Terminal (Pitch-Black Background, Exactly 6 Lines Max) -->
                 <div>
                     <div class="flex items-center justify-between mb-1">
                         <h4 class="text-[11px] font-bold text-gray-600 uppercase tracking-wider">Synchronization Activity Log</h4>
                         
-                        <!-- Point 2: Copy Logs Button Disabled (Greyed Out) During Syncing -->
+                        <!-- Copy Logs Button Disabled (Greyed Out) During Syncing -->
                         <button type="button" 
                                 @click="copyLogs()" 
                                 :disabled="isSyncing"
@@ -240,11 +239,14 @@
                         </button>
                     </div>
 
-                    <div id="sync-log-container" class="bg-gray-900 text-gray-100 font-mono text-[11px] leading-5 p-2.5 rounded-lg h-[120px] max-h-[120px] overflow-y-auto space-y-1 shadow-inner border border-gray-800">
+                    <!-- Pitch-Black Log Container (Strict Height 108px = 6 lines * 18px line-height) -->
+                    <div id="sync-log-container" 
+                         class="font-mono text-[11px] leading-[18px] p-2.5 rounded-lg h-[118px] max-h-[118px] overflow-y-auto shadow-inner border border-slate-900"
+                         style="background-color: #020617 !important; color: #f8fafc !important;">
                         <template x-for="(log, lIdx) in logs" :key="lIdx">
-                            <div class="leading-5">
-                                <span class="text-slate-400" x-text="`[${log.time}]`"></span>
-                                <span class="text-slate-100" x-text="log.text"></span>
+                            <div class="leading-[18px] flex items-start space-x-1.5 shrink-0 py-0.5">
+                                <span class="text-slate-400 font-normal shrink-0" x-text="`[${log.time}]`"></span>
+                                <span class="text-slate-100 font-medium break-words" x-text="log.text"></span>
                             </div>
                         </template>
                     </div>
@@ -268,7 +270,7 @@
                 </div>
 
                 <div class="flex items-center space-x-2">
-                    <!-- Point 4: Explicit Red Cancel Sync Button with Inline CSS -->
+                    <!-- Explicit Red Cancel Sync Button -->
                     <button x-show="isSyncing" 
                             @click="cancelSync()" 
                             type="button" 
@@ -277,7 +279,7 @@
                         Cancel Sync
                     </button>
 
-                    <!-- Point 3: Close Button Color Matched to Copy Logs (Indigo Theme) -->
+                    <!-- Close Button Color Matched to Copy Logs (Indigo Theme) -->
                     <button x-show="!isSyncing"
                             @click="showModal = false" 
                             type="button" 

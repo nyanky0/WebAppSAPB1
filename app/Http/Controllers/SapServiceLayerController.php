@@ -130,12 +130,19 @@ class SapServiceLayerController extends Controller
                 BusinessPartner::updateOrCreate(
                     ['card_code' => $data['CardCode']],
                     [
+                        'bp_code' => $data['CardCode'],
+                        'card_code' => $data['CardCode'],
                         'card_name' => $data['CardName'] ?? null,
+                        'bp_name' => $data['CardName'] ?? null,
+                        'name' => $data['CardName'] ?? null,
                         'card_type' => $data['CardType'] ?? null,
+                        'type' => ($data['CardType'] ?? '') === 'cSupplier' ? 'Vendor' : 'Customer',
                         'group_code' => $data['GroupCode'] ?? null,
                         'phone1' => $data['Phone1'] ?? null,
                         'email' => $data['EmailAddress'] ?? null,
                         'currency' => $data['Currency'] ?? null,
+                        'sync_status' => 'Synced',
+                        'sap_status' => 'Created',
                     ]
                 );
                 $count++;
@@ -206,9 +213,10 @@ class SapServiceLayerController extends Controller
                 if (!$code) continue;
 
                 ChartOfAccount::updateOrCreate(
-                    ['acct_code' => $code],
+                    ['code' => $code],
                     [
                         'code' => $code,
+                        'acct_code' => $code,
                         'name' => $data['Name'] ?? $data['AcctName'] ?? $code,
                         'acct_name' => $data['Name'] ?? $data['AcctName'] ?? $code,
                         'sync_status' => 'Synced',
@@ -452,8 +460,11 @@ class SapServiceLayerController extends Controller
                 if (!$code) continue;
 
                 WithholdingTax::updateOrCreate(
-                    ['wt_code' => $code],
+                    ['code' => $code],
                     [
+                        'code' => $code,
+                        'wt_code' => $code,
+                        'name' => $data['WTName'] ?? $data['Name'] ?? $code,
                         'wt_name' => $data['WTName'] ?? $data['Name'] ?? $code,
                         'rate' => $data['Rate'] ?? 0,
                         'sync_status' => 'Synced',

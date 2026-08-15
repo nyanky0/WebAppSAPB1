@@ -16,7 +16,9 @@ class ChartOfAccount extends Model
 
     protected $fillable = [
         'code',
+        'acct_code',
         'name',
+        'acct_name',
         'external_code',
         'currency',
         'levels',

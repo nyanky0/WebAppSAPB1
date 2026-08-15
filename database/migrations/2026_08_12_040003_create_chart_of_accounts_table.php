@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::create('chart_of_accounts', function (Blueprint $table) {
             $table->string('code')->primary(); // AcctCode
+            $table->string('acct_code')->nullable(); // Alternate AcctCode field
             $table->string('name')->nullable(); // AcctName
+            $table->string('acct_name')->nullable(); // Alternate AcctName field
             $table->string('external_code')->nullable(); // FormatCode
             $table->string('currency')->nullable(); // AcctCurrency
             $table->integer('levels')->default(1);

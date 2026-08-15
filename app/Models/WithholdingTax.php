@@ -8,7 +8,9 @@ class WithholdingTax extends Model
 {
     protected $fillable = [
         'code',
+        'wt_code',
         'name',
+        'wt_name',
         'rate',
         'category',
         'gl_account',

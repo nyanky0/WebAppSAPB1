@@ -13,9 +13,17 @@ return new class extends Migration
     {
         Schema::create('business_partners', function (Blueprint $table) {
             $table->id();
-            $table->string('bp_code')->unique();
+            $table->string('bp_code')->nullable();
+            $table->string('card_code')->nullable();
             $table->string('name')->nullable();
+            $table->string('card_name')->nullable();
+            $table->string('bp_name')->nullable();
+            $table->string('card_type')->nullable();
             $table->string('type')->default('Vendor'); // Vendor or Customer
+            $table->string('group_code')->nullable();
+            $table->string('phone1')->nullable();
+            $table->string('email')->nullable();
+            $table->string('currency')->nullable();
             $table->json('contact_persons')->nullable();
             $table->string('sync_status')->default('Draft');
             $table->string('sap_status')->nullable();
