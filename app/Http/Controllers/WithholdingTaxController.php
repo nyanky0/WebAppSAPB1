@@ -50,65 +50,7 @@ class WithholdingTaxController extends Controller
 
     public function sync(Request $request)
     {
-        set_time_limit(300);
-        $config = Config::first();
-        if (!$config || !$config->base_url || !$config->database) {
-            return back()->with('error', 'Configuration is missing.');
-        }
-
-        try {
-            $sap = new SapService($config);
-            $user = auth()->user();
-
-            $wtSynced = 0;
-            $response = null;
-
-            try {
-                $response = $sap->get($user, 'WithholdingTaxCodes');
-            } catch (\Exception $ex) {
-                $response = $sap->get($user, 'WTax');
-            }
-
-            if (isset($response['value']) && is_array($response['value'])) {
-                DB::beginTransaction();
-                foreach ($response['value'] as $wtData) {
-                    $code = $wtData['WTCode'] ?? ($wtData['Code'] ?? null);
-                    if (!$code) continue;
-
-                    $name = $wtData['WTName'] ?? ($wtData['Name'] ?? ($wtData['WTDescription'] ?? $code));
-                    $rate = (float) ($wtData['Rate'] ?? ($wtData['Percent'] ?? 0));
-                    $category = $wtData['Category'] ?? ($wtData['Type'] ?? null);
-                    $account = $wtData['Account'] ?? ($wtData['GLAccount'] ?? null);
-                    $inactive = ($wtData['Inactive'] ?? ($wtData['Locked'] ?? 'tNO')) === 'tYES';
-
-                    WithholdingTax::updateOrCreate(
-                        ['code' => $code],
-                        [
-                            'name' => $name,
-                            'rate' => $rate,
-                            'category' => $category,
-                            'gl_account' => $account,
-                            'inactive' => $inactive,
-                            'sync_status' => 'Synced',
-                            'sap_status' => 'Created',
-                            'sync_error' => null
-                        ]
-                    );
-                    $wtSynced++;
-                }
-                DB::commit();
-            }
-
-            SystemLog::logAction('sap', 'Synced Withholding Taxes', "Successfully synced {$wtSynced} Withholding Taxes from SAP.");
-
-            return redirect()->route('withholding-taxes.index')->with('success', "Successfully synced {$wtSynced} Withholding Taxes from SAP.");
-
-        } catch (\Exception $e) {
-            if (DB::transactionLevel() > 0) {
-                DB::rollBack();
-            }
-            Log::error("Withholding Taxes Sync Error: " . $e->getMessage());
-            return back()->with('error', 'Failed to sync Withholding Taxes: ' . $e->getMessage());
-        }
+        $sapController = app(SapServiceLayerController::class);
+        return $sapController->syncWithholdingTaxes();
     }
 }

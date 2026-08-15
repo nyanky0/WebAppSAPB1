@@ -78,78 +78,8 @@ class WarehouseController extends Controller
 
     public function sync(Request $request)
     {
-        set_time_limit(300);
-        $config = Config::first();
-        if (!$config || !$config->base_url || !$config->database) {
-            return back()->with('error', 'Configuration is missing.');
-        }
-
-        try {
-            $sap = new SapService($config);
-            $user = auth()->user();
-
-            // 1. Sync Warehouses
-            $whsSynced = 0;
-            $response = $sap->get($user, 'Warehouses?$select=WarehouseCode,WarehouseName,Inactive,Location,EnableBinLocations');
-
-            if (isset($response['value']) && is_array($response['value'])) {
-                DB::beginTransaction();
-                foreach ($response['value'] as $whsData) {
-                    if (!isset($whsData['WarehouseCode'])) continue;
-
-                    Warehouse::updateOrCreate(
-                        ['whs_code' => $whsData['WarehouseCode']],
-                        [
-                            'whs_name' => $whsData['WarehouseName'] ?? null,
-                            'is_active' => ($whsData['Inactive'] ?? 'tNO') === 'tNO',
-                            'location' => $whsData['Location'] ?? null,
-                            'bin_enabled' => ($whsData['EnableBinLocations'] ?? 'tNO') === 'tYES',
-                            'sync_status' => 'Synced',
-                            'sap_status' => 'Created',
-                            'sync_error' => null
-                        ]
-                    );
-                    $whsSynced++;
-                }
-                DB::commit();
-            }
-
-            // 2. Sync Bin Locations
-            $binsSynced = 0;
-            try {
-                $binResponse = $sap->get($user, 'BinLocations?$select=AbsEntry,BinCode,Warehouse,Inactive');
-                if (isset($binResponse['value']) && is_array($binResponse['value'])) {
-                    DB::beginTransaction();
-                    foreach ($binResponse['value'] as $binData) {
-                        if (!isset($binData['BinCode'])) continue;
-
-                        BinLocation::updateOrCreate(
-                            ['abs_entry' => $binData['AbsEntry']],
-                            [
-                                'bin_code' => $binData['BinCode'],
-                                'whs_code' => $binData['Warehouse'] ?? null,
-                                'is_active' => ($binData['Inactive'] ?? 'tNO') === 'tNO',
-                                'sync_status' => 'Synced',
-                                'sap_status' => 'Created',
-                                'sync_error' => null
-                            ]
-                        );
-                        $binsSynced++;
-                    }
-                    DB::commit();
-                }
-            } catch (\Exception $e) {
-                Log::warning('Bin Locations sync warning: ' . $e->getMessage());
-            }
-
-            SystemLog::logAction('sap', 'Synced Warehouses', "Successfully synced {$whsSynced} warehouses and {$binsSynced} bin locations.");
-
-            return redirect()->route('warehouses.index')->with('success', "Successfully synced {$whsSynced} Warehouses and {$binsSynced} Bin Locations.");
-
-        } catch (\Exception $e) {
-            Log::error("Warehouse Sync Error: " . $e->getMessage());
-            return redirect()->route('warehouses.index')->with('error', 'Error syncing Warehouses: ' . $e->getMessage());
-        }
+        $sapController = app(SapServiceLayerController::class);
+        return $sapController->syncWarehouses();
     }
 
     public function pushToSap(Warehouse $whs, SapService $sap)

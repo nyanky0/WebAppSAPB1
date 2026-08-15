@@ -15,10 +15,20 @@
     </div>
 
     <div class="flex flex-col flex-1 overflow-y-auto">
-        <nav x-data="{ activeFolder: null }" class="flex-1 px-2 py-4 space-y-1">
+        <nav x-data="{ searchQuery: '', activeFolder: null, match(text) { if (!this.searchQuery) return true; return text.toLowerCase().includes(this.searchQuery.toLowerCase()); } }" class="flex-1 px-2 py-4 space-y-1">
 
-            <!-- Dashboard (Always visible) -->
-            <a href="{{ route('dashboard') }}"
+            <!-- Debounced Navigation Search Box -->
+            <div x-show="sidebarOpen" class="px-2 mb-3">
+                <div class="relative">
+                    <input type="text" x-model.debounce.300ms="searchQuery" placeholder="Search menu..." class="w-full bg-gray-800 text-gray-200 text-xs rounded-md pl-8 pr-2 py-1.5 border border-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder-gray-500">
+                    <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Dashboard (Always visible unless filtered) -->
+            <a href="{{ route('dashboard') }}" x-show="match('Dashboard')"
                 class="flex items-center px-2 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-800 hover:text-white group">
                 <svg class="w-6 h-6 mr-3 text-gray-400 group-hover:text-gray-300" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -33,7 +43,7 @@
             @if (in_array('Administrator.Config', $permissions) ||
                     in_array('Administrator.Roles', $permissions) ||
                     in_array('Administrator.Users', $permissions))
-                <div class="space-y-1">
+                <div class="space-y-1" x-show="match('Administrator') || match('Config') || match('Roles') || match('Users')">
                     <button
                         @click="if (!sidebarOpen) { sidebarOpen = true; activeFolder = 'admin'; } else { activeFolder = activeFolder === 'admin' ? null : 'admin'; }"
                         type="button"
@@ -48,7 +58,7 @@
                         </svg>
                         <span x-show="sidebarOpen" class="flex-1 text-left">Administrator</span>
                         <svg x-show="sidebarOpen"
-                            :class="activeFolder === 'admin' ? 'rotate-90 text-gray-400' : 'text-gray-400'"
+                            :class="activeFolder === 'admin' || searchQuery ? 'rotate-90 text-gray-400' : 'text-gray-400'"
                             class="w-5 h-5 ml-auto transition-colors duration-150 ease-in-out transform"
                             viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd"
@@ -56,7 +66,7 @@
                                 clip-rule="evenodd"></path>
                         </svg>
                     </button>
-                    <div x-show="activeFolder === 'admin' && sidebarOpen" x-collapse class="space-y-1">
+                    <div x-show="(activeFolder === 'admin' || searchQuery) && sidebarOpen" x-collapse class="space-y-1">
                         @if (in_array('Administrator.Config', $permissions))
                             <a href="{{ route('config.index') }}"
                                 class="flex items-center w-full py-2 pl-11 pr-2 text-sm font-medium text-gray-400 rounded-md hover:text-white hover:bg-gray-800">Config</a>

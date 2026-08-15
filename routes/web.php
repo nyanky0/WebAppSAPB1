@@ -89,6 +89,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/sap/sync/items', [\App\Http\Controllers\SapServiceLayerController::class, 'syncItems'])->name('sap.sync.items');
     Route::post('/sap/sync/business-partners', [\App\Http\Controllers\SapServiceLayerController::class, 'syncBusinessPartners'])->name('sap.sync.bp');
     Route::post('/sap/sync/branches', [\App\Http\Controllers\SapServiceLayerController::class, 'syncBranches'])->name('sap.sync.branches');
+    Route::post('/sap/sync/chart-of-accounts', [\App\Http\Controllers\SapServiceLayerController::class, 'syncChartOfAccounts'])->name('sap.sync.coa');
+    Route::post('/sap/sync/cost-centers', [\App\Http\Controllers\SapServiceLayerController::class, 'syncCostCenters'])->name('sap.sync.cost-centers');
+    Route::post('/sap/sync/dimensions', [\App\Http\Controllers\SapServiceLayerController::class, 'syncDimensions'])->name('sap.sync.dimensions');
+    Route::post('/sap/sync/item-groups', [\App\Http\Controllers\SapServiceLayerController::class, 'syncItemGroups'])->name('sap.sync.item-groups');
+    Route::post('/sap/sync/taxes', [\App\Http\Controllers\SapServiceLayerController::class, 'syncTaxes'])->name('sap.sync.taxes');
+    Route::post('/sap/sync/uoms', [\App\Http\Controllers\SapServiceLayerController::class, 'syncUoms'])->name('sap.sync.uoms');
+    Route::post('/sap/sync/warehouses', [\App\Http\Controllers\SapServiceLayerController::class, 'syncWarehouses'])->name('sap.sync.warehouses');
+    Route::post('/sap/sync/withholding-taxes', [\App\Http\Controllers\SapServiceLayerController::class, 'syncWithholdingTaxes'])->name('sap.sync.wtax');
+    Route::post('/sap/sync/period-indicators', [\App\Http\Controllers\SapServiceLayerController::class, 'syncPeriodIndicators'])->name('sap.sync.period-indicators');
 
     Route::get('/branches', [\App\Http\Controllers\BranchController::class, 'index'])->name('branches.index');
     Route::post('/branches/sync', [\App\Http\Controllers\BranchController::class, 'sync'])->name('branches.sync');

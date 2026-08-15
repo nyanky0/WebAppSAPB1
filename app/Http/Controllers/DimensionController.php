@@ -40,50 +40,7 @@ class DimensionController extends Controller
 
     public function sync(Request $request)
     {
-        set_time_limit(300);
-        $config = Config::first();
-        if (!$config || !$config->base_url || !$config->database) {
-            return back()->with('error', 'Configuration is missing.');
-        }
-
-        try {
-            $sap = new SapService($config);
-            $user = auth()->user();
-
-            $dimensionsSynced = 0;
-            $response = $sap->get($user, 'Dimensions');
-
-            if (isset($response['value']) && is_array($response['value'])) {
-                DB::beginTransaction();
-                foreach ($response['value'] as $dimData) {
-                    $code = $dimData['DimensionCode'] ?? ($dimData['Code'] ?? null);
-                    if (!$code) continue;
-
-                    Dimension::updateOrCreate(
-                        ['dimension_code' => $code],
-                        [
-                            'dimension_name' => !empty($dimData['DimensionDescription']) ? $dimData['DimensionDescription'] : ($dimData['DimensionName'] ?? "Dimension {$code}"),
-                            'is_active' => ($dimData['IsActive'] ?? 'tYES') === 'tYES',
-                            'sync_status' => 'Synced',
-                            'sap_status' => 'Created',
-                            'sync_error' => null
-                        ]
-                    );
-                    $dimensionsSynced++;
-                }
-                DB::commit();
-            }
-
-            SystemLog::logAction('sap', 'Synced Dimensions', "Successfully synced {$dimensionsSynced} Dimensions from SAP.");
-
-            return redirect()->route('dimensions.index')->with('success', "Successfully synced {$dimensionsSynced} Dimensions from SAP.");
-
-        } catch (\Exception $e) {
-            if (DB::transactionLevel() > 0) {
-                DB::rollBack();
-            }
-            Log::error("Dimensions Sync Error: " . $e->getMessage());
-            return back()->with('error', 'Failed to sync Dimensions: ' . $e->getMessage());
-        }
+        $sapController = app(SapServiceLayerController::class);
+        return $sapController->syncDimensions();
     }
 }
