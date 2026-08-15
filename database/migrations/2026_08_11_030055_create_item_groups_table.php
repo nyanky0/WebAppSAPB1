@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('item_groups', function (Blueprint $table) {
             $table->id();
+            $table->string('group_code')->nullable();
             $table->integer('sap_number')->nullable();
             $table->string('group_name')->nullable();
             $table->string('default_uom_group')->nullable();

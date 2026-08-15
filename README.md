@@ -94,3 +94,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-08-15 13:48**: feat: optimize master data sync to 11 tasks, single-column scrollable task list (6 visible), copy logs enabled when finished, and select query optimizations
 - **2026-08-15 13:53**: fix: resolve 5 SAP Service Layer query errors, shrink modal width to max-w-md, high-contrast dark title, and red Cancel Sync button
 - **2026-08-15 13:58**: feat: design Windows 11 Fluent mica theme, constrain task list (6 items) & log terminal (6 lines), fix Cancel/Copy buttons, and wrap sync actions in try-catch
+- **2026-08-15 14:01**: fix: replace semi-transparent glass modal with 100% solid white card, dark slate titlebar, solid indigo Copy Logs button, and red Cancel button

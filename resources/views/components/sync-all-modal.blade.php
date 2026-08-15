@@ -131,17 +131,18 @@
         <div class="relative w-full max-w-md bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden transform transition-all"
              @click.outside="if (!isSyncing) showModal = false">
             
-            <!-- Window Titlebar Header (Slate Dark) -->
-            <div class="px-4 py-3 bg-slate-900 text-white flex items-center justify-between">
+            <!-- Window Titlebar Header (Light Slate with Explicit Dark Title Text) -->
+            <div class="px-4 py-3 bg-slate-100 border-b border-slate-200 flex items-center justify-between">
                 <div class="flex items-center space-x-2">
-                    <svg class="w-4 h-4 text-indigo-400" :class="isSyncing ? 'animate-spin' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="w-4 h-4 text-indigo-600" :class="isSyncing ? 'animate-spin' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    <span class="text-xs font-bold text-white tracking-tight">Sync Everything From SAP</span>
-                    <span class="text-[11px] text-slate-400 font-normal">| Master Data</span>
+                    <!-- Point 5: Explicit dark slate modal title color -->
+                    <h3 class="text-sm font-extrabold tracking-tight" style="color: #0f172a !important;">Sync Everything From SAP</h3>
+                    <span class="text-[11px] text-slate-500 font-normal">| Master Data</span>
                 </div>
 
-                <button x-show="!isSyncing" @click="showModal = false" type="button" class="text-slate-400 hover:text-white p-1 rounded-md transition-colors cursor-pointer">
+                <button x-show="!isSyncing" @click="showModal = false" type="button" class="text-slate-400 hover:text-slate-700 p-1 rounded-md transition-colors cursor-pointer">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -224,25 +225,26 @@
                     </template>
                 </div>
 
-                <!-- Synchronization Activity Log Terminal (Max 6 Lines Visible, Height 120px) -->
+                <!-- Point 1: Synchronization Activity Log Terminal (Exact Max 6 Lines Height 120px) -->
                 <div>
                     <div class="flex items-center justify-between mb-1">
                         <h4 class="text-[11px] font-bold text-gray-600 uppercase tracking-wider">Synchronization Activity Log</h4>
                         
-                        <!-- Solid Indigo/Dark Copy Logs Button -->
+                        <!-- Point 2: Copy Logs Button Disabled (Greyed Out) During Syncing -->
                         <button type="button" 
                                 @click="copyLogs()" 
                                 :disabled="isSyncing"
-                                class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-semibold text-xs rounded-md shadow-xs transition-all cursor-pointer focus:outline-none">
-                            <span x-text="copied ? 'Logs Copied!' : (isSyncing ? 'Copy (Syncing...)' : 'Copy Logs')"></span>
+                                class="px-3 py-1 text-xs font-semibold rounded-md transition-all focus:outline-none"
+                                :class="isSyncing ? 'bg-gray-300 text-gray-500 cursor-not-allowed border border-gray-300 opacity-70 shadow-none' : 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-sm hover:shadow active:scale-95'">
+                            <span x-text="copied ? 'Logs Copied!' : 'Copy Logs'"></span>
                         </button>
                     </div>
 
-                    <div id="sync-log-container" class="bg-gray-900 text-gray-100 font-mono text-[11px] p-2.5 rounded-lg h-[120px] max-h-[120px] overflow-y-auto space-y-1 shadow-inner border border-gray-800">
+                    <div id="sync-log-container" class="bg-gray-900 text-gray-100 font-mono text-[11px] leading-5 p-2.5 rounded-lg h-[120px] max-h-[120px] overflow-y-auto space-y-1 shadow-inner border border-gray-800">
                         <template x-for="(log, lIdx) in logs" :key="lIdx">
-                            <div class="leading-relaxed">
-                                <span class="text-gray-400" x-text="`[${log.time}]`"></span>
-                                <span x-text="log.text"></span>
+                            <div class="leading-5">
+                                <span class="text-slate-400" x-text="`[${log.time}]`"></span>
+                                <span class="text-slate-100" x-text="log.text"></span>
                             </div>
                         </template>
                     </div>
@@ -266,19 +268,20 @@
                 </div>
 
                 <div class="flex items-center space-x-2">
-                    <!-- Vibrant Red Cancel Sync Button -->
+                    <!-- Point 4: Explicit Red Cancel Sync Button with Inline CSS -->
                     <button x-show="isSyncing" 
                             @click="cancelSync()" 
                             type="button" 
-                            class="px-4 py-1.5 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold text-xs rounded-md shadow-sm transition-all cursor-pointer focus:outline-none">
+                            class="px-4 py-1.5 text-xs font-bold text-white rounded-md shadow-sm transition-all cursor-pointer focus:outline-none hover:opacity-90 active:scale-95"
+                            style="background-color: #dc2626 !important; color: #ffffff !important; border: none !important;">
                         Cancel Sync
                     </button>
 
-                    <!-- Close Button -->
+                    <!-- Point 3: Close Button Color Matched to Copy Logs (Indigo Theme) -->
                     <button x-show="!isSyncing"
                             @click="showModal = false" 
                             type="button" 
-                            class="px-4 py-1.5 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-gray-800 font-semibold text-xs rounded-md transition-all cursor-pointer focus:outline-none">
+                            class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-semibold text-xs rounded-md shadow-sm hover:shadow transition-all cursor-pointer focus:outline-none">
                         Close
                     </button>
                 </div>

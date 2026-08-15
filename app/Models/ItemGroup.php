@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ItemGroup extends Model
 {
     protected $fillable = [
+        'group_code',
         'sap_number',
         'group_name',
         'default_uom_group',
