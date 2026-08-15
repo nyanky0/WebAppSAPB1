@@ -96,7 +96,7 @@
                                     @if ($isConfigured)
                                         <button type="button" 
                                                 @click="$dispatch('open-sync-all-modal')" 
-                                                class="inline-flex items-center space-x-2 py-2.5 px-4 border border-purple-200 text-sm font-semibold rounded-lg text-purple-700 bg-purple-50 hover:bg-purple-100 hover:text-purple-800 transition-all shadow-sm focus:outline-none cursor-pointer">
+                                                class="inline-flex items-center space-x-2 py-2.5 px-4 border border-purple-200 text-sm font-semibold rounded-lg text-purple-700 bg-purple-50 hover:bg-purple-100 hover:text-purple-800 transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5 active:scale-95 focus:outline-none cursor-pointer">
                                             <svg class="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                             </svg>

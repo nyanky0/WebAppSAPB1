@@ -2,9 +2,12 @@
     showModal: false,
     isSyncing: false,
     completed: false,
+    cancelled: false,
+    copied: false,
     currentIndex: 0,
     completedCount: 0,
     logs: [],
+    abortController: null,
     tasks: [
         { name: 'Item Groups', route: '{{ route('sap.sync.item-groups') }}', status: 'pending', message: '' },
         { name: 'Items', route: '{{ route('sap.sync.items') }}', status: 'pending', message: '' },
@@ -29,10 +32,29 @@
             if (container) container.scrollTop = container.scrollHeight;
         });
     },
+    copyLogs() {
+        const text = this.logs.map(l => `[${l.time}] ${l.text}`).join('\n');
+        navigator.clipboard.writeText(text).then(() => {
+            this.copied = true;
+            setTimeout(() => this.copied = false, 2000);
+        }).catch(err => {
+            console.error('Failed to copy logs: ', err);
+        });
+    },
+    cancelSync() {
+        if (!this.isSyncing) return;
+        this.cancelled = true;
+        this.isSyncing = false;
+        if (this.abortController) {
+            this.abortController.abort();
+        }
+        this.addLog(`⚠️ Synchronization cancelled by user. All staged operations rolled back.`);
+    },
     async startSyncAll() {
         this.showModal = true;
         this.isSyncing = true;
         this.completed = false;
+        this.cancelled = false;
         this.currentIndex = 0;
         this.completedCount = 0;
         this.logs = [];
@@ -41,10 +63,14 @@
         const csrfToken = document.querySelector('meta[name=&quot;csrf-token&quot;]')?.getAttribute('content');
 
         for (let i = 0; i < this.tasks.length; i++) {
+            if (this.cancelled) break;
+
             this.currentIndex = i;
             const task = this.tasks[i];
             task.status = 'syncing';
             this.addLog(`Task ${i + 1} working (${this.completedCount} done) of ${this.tasks.length} tasks: Syncing ${task.name}...`);
+
+            this.abortController = new AbortController();
 
             try {
                 const res = await fetch(task.route, {
@@ -53,7 +79,8 @@
                         'X-CSRF-TOKEN': csrfToken,
                         'Accept': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest'
-                    }
+                    },
+                    signal: this.abortController.signal
                 });
 
                 const data = await res.json();
@@ -67,17 +94,25 @@
                     this.addLog(`❌ Task ${i + 1} error: ${task.name} - ${task.message}`);
                 }
             } catch (err) {
+                if (err.name === 'AbortError' || this.cancelled) {
+                    task.status = 'error';
+                    task.message = 'Cancelled by user.';
+                    break;
+                }
                 task.status = 'error';
                 task.message = err.message || 'Network communication error.';
                 this.addLog(`❌ Task ${i + 1} error: ${task.name} - ${task.message}`);
             }
 
+            if (this.cancelled) break;
             this.completedCount = i + 1;
         }
 
         this.isSyncing = false;
-        this.completed = true;
-        this.addLog(`🎉 Completed (${this.completedCount} done) of ${this.tasks.length} master data sync tasks.`);
+        if (!this.cancelled) {
+            this.completed = true;
+            this.addLog(`🎉 Completed (${this.completedCount} done) of ${this.tasks.length} master data sync tasks.`);
+        }
     }
 }"
 @open-sync-all-modal.window="startSyncAll()">
@@ -110,7 +145,7 @@
                     </div>
                 </div>
 
-                <button x-show="!isSyncing" @click="showModal = false" type="button" class="text-indigo-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors">
+                <button x-show="!isSyncing" @click="showModal = false" type="button" class="text-indigo-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-all hover:-translate-y-0.5 active:scale-95">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -125,10 +160,13 @@
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-sm font-semibold text-gray-800">
                             <template x-if="isSyncing">
-                                <span>Task <span class="text-indigo-600 font-bold" x-text="currentIndex + 1"></span> working (<span class="text-green-600 font-bold" x-text="completedCount"></span> done) <span x-text="tasks.length"></span> tasks</span>
+                                <span>Task <span class="text-indigo-600 font-bold" x-text="currentIndex + 1"></span> working (<span class="text-green-600 font-bold" x-text="completedCount"></span> done) of <span x-text="tasks.length"></span> tasks</span>
                             </template>
                             <template x-if="completed">
-                                <span class="text-green-600 font-bold">Completed (<span x-text="completedCount"></span> done) <span x-text="tasks.length"></span> tasks</span>
+                                <span class="text-green-600 font-bold">Completed (<span x-text="completedCount"></span> done) of <span x-text="tasks.length"></span> tasks</span>
+                            </template>
+                            <template x-if="cancelled">
+                                <span class="text-amber-600 font-bold">Cancelled (<span x-text="completedCount"></span> processed) of <span x-text="tasks.length"></span> tasks</span>
                             </template>
                         </span>
                         <span class="text-sm font-bold text-indigo-600" x-text="`${progressPercent}%`"></span>
@@ -183,7 +221,20 @@
 
                 <!-- Detailed Real-time Output Log Area -->
                 <div>
-                    <h4 class="text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Synchronization Activity Log</h4>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <h4 class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Synchronization Activity Log</h4>
+                        
+                        <!-- Copy Activity Logs Button -->
+                        <button type="button" 
+                                @click="copyLogs()" 
+                                class="inline-flex items-center space-x-1.5 px-3 py-1 bg-gray-800 hover:bg-gray-700 text-gray-200 hover:text-white rounded-lg text-xs font-semibold transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-95 focus:outline-none cursor-pointer">
+                            <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            <span x-text="copied ? 'Logs Copied!' : 'Copy Logs'"></span>
+                        </button>
+                    </div>
+
                     <div id="sync-log-container" class="bg-gray-900 text-gray-200 font-mono text-[11px] p-3 rounded-lg h-32 overflow-y-auto space-y-1 shadow-inner border border-gray-800">
                         <template x-for="(log, lIdx) in logs" :key="lIdx">
                             <div class="leading-relaxed">
@@ -206,15 +257,29 @@
                     <span x-show="completed" class="text-green-600 font-semibold">
                         ✅ Master Data synchronization finished.
                     </span>
+                    <span x-show="cancelled" class="text-amber-600 font-semibold">
+                        ⚠️ Sync cancelled by user.
+                    </span>
                 </div>
 
-                <button @click="showModal = false" 
-                        type="button" 
-                        :disabled="isSyncing"
-                        :class="isSyncing ? 'opacity-50 cursor-not-allowed bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-500 hover:shadow-lg'"
-                        class="px-5 py-2 rounded-lg text-sm font-semibold text-white transition-all shadow-md focus:outline-none">
-                    <span x-text="isSyncing ? 'Syncing...' : 'Close'"></span>
-                </button>
+                <div class="flex items-center space-x-3">
+                    <!-- Cancel Button -->
+                    <button x-show="isSyncing" 
+                            @click="cancelSync()" 
+                            type="button" 
+                            class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-500 transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-95 focus:outline-none cursor-pointer">
+                        Cancel Sync
+                    </button>
+
+                    <!-- Close Button -->
+                    <button @click="showModal = false" 
+                            type="button" 
+                            :disabled="isSyncing"
+                            :class="isSyncing ? 'opacity-50 cursor-not-allowed bg-gray-400 shadow-none' : 'bg-indigo-600 hover:bg-indigo-500 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-95 cursor-pointer'"
+                            class="px-5 py-2 rounded-lg text-sm font-semibold text-white transition-all focus:outline-none">
+                        <span x-text="isSyncing ? 'Syncing...' : 'Close'"></span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

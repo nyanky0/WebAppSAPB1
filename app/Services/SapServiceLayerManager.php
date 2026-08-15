@@ -127,25 +127,27 @@ class SapServiceLayerManager
         }
     }
 
-    /**
-     * Generic fetch method from SAP Service Layer endpoint.
-     */
     public function fetchFromSap(string $endpoint, array $queryParams = []): array
     {
-        $sap = $this->ensureSapAvailable();
-        $user = auth()->user();
-        
-        $queryString = '';
-        if (!empty($queryParams)) {
-            $queryString = '?' . http_build_query($queryParams);
+        try {
+            $sap = $this->ensureSapAvailable();
+            $user = auth()->user();
+            
+            $queryString = '';
+            if (!empty($queryParams)) {
+                $queryString = '?' . http_build_query($queryParams);
+            }
+
+            $response = $sap->get($endpoint . $queryString, $user);
+
+            if ($response && $response->successful()) {
+                return ['success' => true, 'data' => $response->json()['value'] ?? []];
+            }
+
+            $body = $response ? $response->body() : 'No response received from SAP Service Layer.';
+            return ['success' => false, 'message' => $body];
+        } catch (\Throwable $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
         }
-
-        $response = $sap->get($endpoint . $queryString, $user);
-
-        if ($response->successful()) {
-            return ['success' => true, 'data' => $response->json()['value'] ?? []];
-        }
-
-        return ['success' => false, 'message' => $sap->parseError($response)];
     }
 }

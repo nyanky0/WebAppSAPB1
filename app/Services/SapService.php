@@ -89,8 +89,13 @@ class SapService
         }
     }
 
-    public function get($user, $endpoint)
+    public function get($endpoint, $user = null)
     {
+        $user = $user ?? auth()->user();
+        if (!$user) {
+            throw new Exception("No active authenticated user found to communicate with SAP.");
+        }
+
         $attempt = 0;
         $maxRetries = max(1, $this->maxRetries);
         $lastException = null;
@@ -125,7 +130,7 @@ class SapService
                 $this->logDebug($user, 'GET', "{$this->baseUrl}/$endpoint", null, $response);
 
                 if ($response->successful()) {
-                    return $response->json();
+                    return $response;
                 }
 
                 if ($response->status() >= 500 && $attempt < $maxRetries) {
@@ -145,8 +150,13 @@ class SapService
         }
     }
 
-    public function post($user, $endpoint, $data = [])
+    public function post($endpoint, $data = [], $user = null)
     {
+        $user = $user ?? auth()->user();
+        if (!$user) {
+            throw new Exception("No active authenticated user found to communicate with SAP.");
+        }
+
         $attempt = 0;
         $maxRetries = max(1, $this->maxRetries);
         $lastException = null;
@@ -181,7 +191,7 @@ class SapService
                 $this->logDebug($user, 'POST', "{$this->baseUrl}/$endpoint", $data, $response);
 
                 if ($response->successful()) {
-                    return $response->json();
+                    return $response;
                 }
 
                 if ($response->status() >= 500 && $attempt < $maxRetries) {

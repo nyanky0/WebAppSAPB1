@@ -89,3 +89,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-08-15 13:19**: refactor: consolidate all table migrations into clean primary creation files and reset database schema fresh
 - **2026-08-15 13:22**: style: move 'Sync Everything From SAP' button directly inside SAP B1 Config card without box panel
 - **2026-08-15 13:24**: feat: disable Save Configuration button when form values match saved database state
+- **2026-08-15 13:30**: style: update disabled Save Configuration button visual style with lock icon and grey container matching disabled buttons

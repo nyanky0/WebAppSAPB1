@@ -15,6 +15,7 @@ use App\Models\Tax;
 use App\Models\Uom;
 use App\Models\Warehouse;
 use App\Models\WithholdingTax;
+use App\Models\SystemLog;
 use App\Services\SapServiceLayerManager;
 use Exception;
 use Illuminate\Http\Request;
@@ -31,8 +32,20 @@ class SapServiceLayerController extends Controller
     /**
      * Helper to return JSON for AJAX/API requests or Session Redirects for web views.
      */
-    protected function respondWithSyncResult(bool $success, string $message)
+    protected function respondWithSyncResult(bool $success, string $message, string $module = 'SAP Sync Engine')
     {
+        try {
+            SystemLog::create([
+                'user_id' => auth()->id(),
+                'action' => $success ? 'SUCCESS' : 'ERROR',
+                'module' => $module,
+                'description' => $message,
+                'ip_address' => request()->ip(),
+            ]);
+        } catch (\Throwable $e) {
+            // Silence log creation errors if table structure differs
+        }
+
         if (request()->expectsJson() || request()->ajax()) {
             return response()->json([
                 'success' => $success,

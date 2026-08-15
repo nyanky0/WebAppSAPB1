@@ -48,6 +48,11 @@ This document serves as the authoritative System Knowledge Base and "Brain Confi
 - **Modular Box-by-Box Grid Layout**: Dashboard widgets rendered inside `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6` as modular KPI cards (Pending Approvals, High Urgency PRs, PR Summary, PQ Summary, PO Summary).
 - **Per-User Preferences**: User widget preferences stored in `users.dashboard_widgets` JSON column and configurable via cockpit customization modal.
 
+### F. Interactive Button Hover & Micro-Animation Standards
+- **Mandatory Hover & Click Effects**: ALL interactive buttons across the application MUST feature visual hover elevation, shadow depth, and active click scaling feedback:
+  - Enabled Buttons: `hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer`
+  - Disabled Buttons: `border border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed shadow-none` with lock icon indicator (`🔒`).
+
 ---
 
 ## 3. Deployment & Control Commands
