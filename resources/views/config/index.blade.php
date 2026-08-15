@@ -151,6 +151,52 @@
                         </div>
                     </form>
                 </div>
+                <!-- Bulk Master Data Synchronization Panel -->
+                @php
+                    $isConfigured = !empty($config->base_url) && !empty($config->database);
+                @endphp
+                <div class="bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 text-white overflow-hidden shadow-2xl sm:rounded-2xl border border-indigo-700/50 md:col-span-2">
+                    <div class="p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                        <div class="space-y-2 max-w-2xl">
+                            <div class="inline-flex items-center space-x-2 px-3 py-1 bg-indigo-500/20 border border-indigo-400/30 rounded-full text-xs font-semibold text-indigo-300">
+                                <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span>1-Click Bulk Synchronization Engine</span>
+                            </div>
+                            <h2 class="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Sync Everything From SAP</h2>
+                            <p class="text-sm text-indigo-200/80 leading-relaxed">
+                                Automatically synchronize all 12 SAP Business One master data categories (Item Groups, Items, UOMs, Warehouses, Chart of Accounts, Dimensions, Cost Centers, Taxes, Withholding Taxes, Branches, Business Partners, and Period Indicators) with real-time live progress tracking.
+                            </p>
+                        </div>
+
+                        <div class="shrink-0 flex flex-col items-start md:items-end space-y-2">
+                            @if ($isConfigured)
+                                <button type="button" 
+                                        @click="$dispatch('open-sync-all-modal')" 
+                                        class="inline-flex items-center space-x-3 px-6 py-3.5 border border-indigo-400/40 shadow-xl text-sm font-extrabold rounded-xl text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 hover:shadow-indigo-500/40 transition-all transform hover:-translate-y-0.5 active:scale-95 cursor-pointer">
+                                    <svg class="w-5 h-5 text-indigo-100" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    <span>Sync Everything From SAP</span>
+                                </button>
+                                <span class="text-[11px] text-indigo-300/70">✔ Ready (Configuration saved)</span>
+                            @else
+                                <button type="button" 
+                                        disabled 
+                                        title="Please configure and save SAP Service Layer settings first." 
+                                        class="inline-flex items-center space-x-3 px-6 py-3.5 border border-gray-700 shadow-none text-sm font-semibold rounded-xl text-gray-400 bg-gray-800/80 cursor-not-allowed">
+                                    <svg class="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                    <span>Sync Everything From SAP</span>
+                                </button>
+                                <span class="text-[11px] text-amber-300 font-medium">⚠️ Save Base URL & Database first to enable</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
                 <!-- User Settings Panel -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg md:col-span-2">
                     <form action="{{ route('config.updatePersonal') }}" method="POST">
@@ -183,4 +229,5 @@
     <!-- Modals -->
     <x-period-modal />
     <x-database-modal />
+    <x-sync-all-modal />
 </x-app-layout>

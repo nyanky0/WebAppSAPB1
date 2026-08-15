@@ -29,6 +29,25 @@ class SapServiceLayerController extends Controller
     }
 
     /**
+     * Helper to return JSON for AJAX/API requests or Session Redirects for web views.
+     */
+    protected function respondWithSyncResult(bool $success, string $message)
+    {
+        if (request()->expectsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => $success,
+                'message' => $message,
+            ], $success ? 200 : 400);
+        }
+
+        if ($success) {
+            return redirect()->back()->with('success', $message);
+        }
+
+        return redirect()->back()->with('error', $message);
+    }
+
+    /**
      * Sync Purchase Order to SAP.
      */
     public function syncPurchaseOrder($id)
@@ -36,11 +55,10 @@ class SapServiceLayerController extends Controller
         $po = PurchaseOrder::with('lines')->findOrFail($id);
         $result = $this->manager->pushPurchaseOrder($po);
 
-        if ($result['success']) {
-            return back()->with('success', 'Purchase Order synced to SAP successfully!');
-        }
-
-        return back()->with('error', 'Failed to sync Purchase Order: ' . $result['message']);
+        return $this->respondWithSyncResult(
+            $result['success'],
+            $result['success'] ? 'Purchase Order synced to SAP successfully!' : 'Failed to sync Purchase Order: ' . $result['message']
+        );
     }
 
     /**
@@ -50,7 +68,7 @@ class SapServiceLayerController extends Controller
     {
         $result = $this->manager->fetchFromSap('Items');
         if (!$result['success']) {
-            return back()->with('error', 'Failed to sync Items from SAP: ' . $result['message']);
+            return $this->respondWithSyncResult(false, 'Failed to sync Items from SAP: ' . $result['message']);
         }
 
         $items = $result['data'];
@@ -71,7 +89,7 @@ class SapServiceLayerController extends Controller
             $count++;
         }
 
-        return back()->with('success', "Synced {$count} items from SAP successfully.");
+        return $this->respondWithSyncResult(true, "Synced {$count} items from SAP successfully.");
     }
 
     /**
@@ -81,7 +99,7 @@ class SapServiceLayerController extends Controller
     {
         $result = $this->manager->fetchFromSap('BusinessPartners');
         if (!$result['success']) {
-            return back()->with('error', 'Failed to sync Business Partners: ' . $result['message']);
+            return $this->respondWithSyncResult(false, 'Failed to sync Business Partners: ' . $result['message']);
         }
 
         $bps = $result['data'];
@@ -102,7 +120,7 @@ class SapServiceLayerController extends Controller
             $count++;
         }
 
-        return back()->with('success', "Synced {$count} Business Partners from SAP successfully.");
+        return $this->respondWithSyncResult(true, "Synced {$count} Business Partners from SAP successfully.");
     }
 
     /**
@@ -116,7 +134,7 @@ class SapServiceLayerController extends Controller
         }
 
         if (!$result['success']) {
-            return back()->with('error', 'Failed to sync Branches from SAP: ' . $result['message']);
+            return $this->respondWithSyncResult(false, 'Failed to sync Branches from SAP: ' . $result['message']);
         }
 
         $branches = $result['data'];
@@ -139,7 +157,7 @@ class SapServiceLayerController extends Controller
             $count++;
         }
 
-        return back()->with('success', "Synced {$count} Branches from SAP successfully.");
+        return $this->respondWithSyncResult(true, "Synced {$count} Branches from SAP successfully.");
     }
 
     /**
@@ -149,7 +167,7 @@ class SapServiceLayerController extends Controller
     {
         $result = $this->manager->fetchFromSap('ChartOfAccounts');
         if (!$result['success']) {
-            return back()->with('error', 'Failed to sync Chart of Accounts: ' . $result['message']);
+            return $this->respondWithSyncResult(false, 'Failed to sync Chart of Accounts: ' . $result['message']);
         }
 
         $count = 0;
@@ -170,7 +188,7 @@ class SapServiceLayerController extends Controller
             $count++;
         }
 
-        return back()->with('success', "Synced {$count} Chart of Accounts from SAP successfully.");
+        return $this->respondWithSyncResult(true, "Synced {$count} Chart of Accounts from SAP successfully.");
     }
 
     /**
@@ -180,7 +198,7 @@ class SapServiceLayerController extends Controller
     {
         $result = $this->manager->fetchFromSap('ProfitCenters');
         if (!$result['success']) {
-            return back()->with('error', 'Failed to sync Cost Centers: ' . $result['message']);
+            return $this->respondWithSyncResult(false, 'Failed to sync Cost Centers: ' . $result['message']);
         }
 
         $count = 0;
@@ -200,7 +218,7 @@ class SapServiceLayerController extends Controller
             $count++;
         }
 
-        return back()->with('success', "Synced {$count} Cost Centers from SAP successfully.");
+        return $this->respondWithSyncResult(true, "Synced {$count} Cost Centers from SAP successfully.");
     }
 
     /**
@@ -210,7 +228,7 @@ class SapServiceLayerController extends Controller
     {
         $result = $this->manager->fetchFromSap('Dimensions');
         if (!$result['success']) {
-            return back()->with('error', 'Failed to sync Dimensions: ' . $result['message']);
+            return $this->respondWithSyncResult(false, 'Failed to sync Dimensions: ' . $result['message']);
         }
 
         $count = 0;
@@ -229,7 +247,7 @@ class SapServiceLayerController extends Controller
             $count++;
         }
 
-        return back()->with('success', "Synced {$count} Dimensions from SAP successfully.");
+        return $this->respondWithSyncResult(true, "Synced {$count} Dimensions from SAP successfully.");
     }
 
     /**
@@ -239,7 +257,7 @@ class SapServiceLayerController extends Controller
     {
         $result = $this->manager->fetchFromSap('ItemGroups');
         if (!$result['success']) {
-            return back()->with('error', 'Failed to sync Item Groups: ' . $result['message']);
+            return $this->respondWithSyncResult(false, 'Failed to sync Item Groups: ' . $result['message']);
         }
 
         $count = 0;
@@ -258,7 +276,7 @@ class SapServiceLayerController extends Controller
             $count++;
         }
 
-        return back()->with('success', "Synced {$count} Item Groups from SAP successfully.");
+        return $this->respondWithSyncResult(true, "Synced {$count} Item Groups from SAP successfully.");
     }
 
     /**
@@ -268,7 +286,7 @@ class SapServiceLayerController extends Controller
     {
         $result = $this->manager->fetchFromSap('VatGroups');
         if (!$result['success']) {
-            return back()->with('error', 'Failed to sync Taxes from SAP: ' . $result['message']);
+            return $this->respondWithSyncResult(false, 'Failed to sync Taxes from SAP: ' . $result['message']);
         }
 
         $count = 0;
@@ -288,7 +306,7 @@ class SapServiceLayerController extends Controller
             $count++;
         }
 
-        return back()->with('success', "Synced {$count} Tax Codes from SAP successfully.");
+        return $this->respondWithSyncResult(true, "Synced {$count} Tax Codes from SAP successfully.");
     }
 
     /**
@@ -298,7 +316,7 @@ class SapServiceLayerController extends Controller
     {
         $result = $this->manager->fetchFromSap('UnitOfMeasurements');
         if (!$result['success']) {
-            return back()->with('error', 'Failed to sync UOMs: ' . $result['message']);
+            return $this->respondWithSyncResult(false, 'Failed to sync UOMs: ' . $result['message']);
         }
 
         $count = 0;
@@ -317,7 +335,7 @@ class SapServiceLayerController extends Controller
             $count++;
         }
 
-        return back()->with('success', "Synced {$count} UOMs from SAP successfully.");
+        return $this->respondWithSyncResult(true, "Synced {$count} UOMs from SAP successfully.");
     }
 
     /**
@@ -327,7 +345,7 @@ class SapServiceLayerController extends Controller
     {
         $result = $this->manager->fetchFromSap('Warehouses');
         if (!$result['success']) {
-            return back()->with('error', 'Failed to sync Warehouses: ' . $result['message']);
+            return $this->respondWithSyncResult(false, 'Failed to sync Warehouses: ' . $result['message']);
         }
 
         $count = 0;
@@ -346,7 +364,7 @@ class SapServiceLayerController extends Controller
             $count++;
         }
 
-        return back()->with('success', "Synced {$count} Warehouses from SAP successfully.");
+        return $this->respondWithSyncResult(true, "Synced {$count} Warehouses from SAP successfully.");
     }
 
     /**
@@ -356,7 +374,7 @@ class SapServiceLayerController extends Controller
     {
         $result = $this->manager->fetchFromSap('WithholdingTaxCodes');
         if (!$result['success']) {
-            return back()->with('error', 'Failed to sync Withholding Taxes: ' . $result['message']);
+            return $this->respondWithSyncResult(false, 'Failed to sync Withholding Taxes: ' . $result['message']);
         }
 
         $count = 0;
@@ -376,7 +394,7 @@ class SapServiceLayerController extends Controller
             $count++;
         }
 
-        return back()->with('success', "Synced {$count} Withholding Tax Codes from SAP successfully.");
+        return $this->respondWithSyncResult(true, "Synced {$count} Withholding Tax Codes from SAP successfully.");
     }
 
     /**
@@ -386,7 +404,7 @@ class SapServiceLayerController extends Controller
     {
         $result = $this->manager->fetchFromSap('PeriodIndicators');
         if (!$result['success']) {
-            return back()->with('error', 'Failed to sync Period Indicators: ' . $result['message']);
+            return $this->respondWithSyncResult(false, 'Failed to sync Period Indicators: ' . $result['message']);
         }
 
         $indicators = array_column($result['data'], 'PeriodIndicatorName');
@@ -397,6 +415,6 @@ class SapServiceLayerController extends Controller
             $config->update(['period_indicator' => $firstIndicator]);
         }
 
-        return back()->with('success', 'Period Indicators synced from SAP successfully.');
+        return $this->respondWithSyncResult(true, 'Period Indicators synced from SAP successfully.');
     }
 }
