@@ -113,7 +113,7 @@ class SapServiceLayerController extends Controller
      */
     public function syncBusinessPartners()
     {
-        $result = $this->manager->fetchFromSap('BusinessPartners?$select=CardCode,CardName,CardType,GroupCode,Phone1,EmailAddress,Currency');
+        $result = $this->manager->fetchFromSap('BusinessPartners?$select=CardCode,CardName,CardType,GroupCode,Phone1,EmailAddress,Currency&$top=200');
         if (!$result['success']) {
             return $this->respondWithSyncResult(false, 'Failed to sync Business Partners: ' . $result['message']);
         }
@@ -181,7 +181,7 @@ class SapServiceLayerController extends Controller
      */
     public function syncChartOfAccounts()
     {
-        $result = $this->manager->fetchFromSap('ChartOfAccounts?$select=Code,Name,AcctCode,AcctName');
+        $result = $this->manager->fetchFromSap('ChartOfAccounts?$select=Code,Name');
         if (!$result['success']) {
             return $this->respondWithSyncResult(false, 'Failed to sync Chart of Accounts: ' . $result['message']);
         }
@@ -271,7 +271,7 @@ class SapServiceLayerController extends Controller
      */
     public function syncItemGroups()
     {
-        $result = $this->manager->fetchFromSap('ItemGroups?$select=Number,ItmsGrpCod,GroupName');
+        $result = $this->manager->fetchFromSap('ItemGroups?$select=Number,GroupName');
         if (!$result['success']) {
             return $this->respondWithSyncResult(false, 'Failed to sync Item Groups: ' . $result['message']);
         }
@@ -300,7 +300,7 @@ class SapServiceLayerController extends Controller
      */
     public function syncTaxes()
     {
-        $result = $this->manager->fetchFromSap('VatGroups?$select=Code,Name,Rate');
+        $result = $this->manager->fetchFromSap('VatGroups?$select=Code,Name');
         if (!$result['success']) {
             return $this->respondWithSyncResult(false, 'Failed to sync Taxes from SAP: ' . $result['message']);
         }
@@ -388,9 +388,9 @@ class SapServiceLayerController extends Controller
      */
     public function syncWithholdingTaxes()
     {
-        $result = $this->manager->fetchFromSap('WithholdingTaxCodes?$select=WTCode,WTName,Rate');
+        $result = $this->manager->fetchFromSap('WithholdingTaxCodes?$select=WTCode,WTName');
         if (!$result['success']) {
-            $result = $this->manager->fetchFromSap('WithholdingTax?$select=WTCode,WTName,Rate');
+            $result = $this->manager->fetchFromSap('WithholdingTax?$select=WTCode,WTName');
         }
 
         if (!$result['success']) {

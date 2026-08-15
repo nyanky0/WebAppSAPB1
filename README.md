@@ -91,3 +91,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-08-15 13:24**: feat: disable Save Configuration button when form values match saved database state
 - **2026-08-15 13:30**: style: update disabled Save Configuration button visual style with lock icon and grey container matching disabled buttons
 - **2026-08-15 13:38**: fix: resolve JSON parsing error by standardizing SapService signatures, add Cancel Sync rollback, Copy Activity Logs, button micro-animations, and update PROJECT_BRAIN.md
+- **2026-08-15 13:48**: feat: optimize master data sync to 11 tasks, single-column scrollable task list (6 visible), copy logs enabled when finished, and select query optimizations
