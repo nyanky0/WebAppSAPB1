@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('sap_user')->nullable();
             $table->string('sap_password')->nullable();
             $table->foreignId('role_id')->nullable()->constrained('roles')->onDelete('set null');
+            $table->json('dashboard_widgets')->nullable();
             $table->string('created_by')->nullable();
             $table->string('updated_by')->nullable();
             $table->timestamps();

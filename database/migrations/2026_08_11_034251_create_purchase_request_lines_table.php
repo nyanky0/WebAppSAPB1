@@ -21,7 +21,13 @@ return new class extends Migration
             $table->decimal('quantity', 19, 6)->default(1);
             $table->decimal('price', 19, 6)->default(0);
             $table->string('uom_code')->nullable();
-            $table->string('tax_code')->nullable();
+            $table->integer('line_num')->default(0);
+            $table->integer('target_type')->nullable();
+            $table->integer('target_entry')->nullable();
+            $table->integer('target_line')->nullable();
+            $table->string('whs_code')->nullable();
+            $table->decimal('on_hand_qty', 15, 2)->default(0);
+            $table->date('required_date')->nullable();
             $table->string('costing_code')->nullable();
             $table->string('costing_code2')->nullable();
             $table->string('costing_code3')->nullable();

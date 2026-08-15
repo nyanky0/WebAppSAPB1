@@ -24,7 +24,11 @@ return new class extends Migration
             $table->string('requester')->nullable();
             $table->string('vendor')->nullable();
             $table->string('whs_code')->nullable();
-            $table->string('tax_code')->nullable();
+            $table->integer('doc_entry')->nullable()->index();
+            $table->integer('doc_num')->nullable()->index();
+            $table->string('urgency_level')->default('normal'); // low, normal, high
+            $table->string('approval_status')->default('none'); // none, pending, approved, rejected
+            $table->string('status')->default('draft'); // draft, open, close, cancel
             $table->text('sync_error')->nullable();
             $table->string('created_by')->nullable();
             $table->foreign('created_by')->references('uid7')->on('users')->onDelete('set null');
