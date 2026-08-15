@@ -7,7 +7,45 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- SAP B1 Configuration Panel -->
-                <div class="bg-white/60 backdrop-blur-xl border border-white/40 overflow-hidden shadow-xl sm:rounded-2xl transition-all">
+                <div class="bg-white/60 backdrop-blur-xl border border-white/40 overflow-hidden shadow-xl sm:rounded-2xl transition-all"
+                     x-data="{
+                         initialBaseUrl: '{{ old('base_url', $config->base_url) }}',
+                         initialDatabase: '{{ old('database', $config->database) }}',
+                         initialPeriodIndicator: '{{ old('period_indicator', $config->period_indicator) }}',
+                         initialMaxRetries: '{{ old('max_retries', $config->max_retries ?? 3) }}',
+
+                         baseUrl: '{{ old('base_url', $config->base_url) }}',
+                         database: '{{ old('database', $config->database) }}',
+                         periodIndicator: '{{ old('period_indicator', $config->period_indicator) }}',
+                         maxRetries: '{{ old('max_retries', $config->max_retries ?? 3) }}',
+
+                         get isDirty() {
+                             return (this.baseUrl ?? '').trim() !== (this.initialBaseUrl ?? '').trim() ||
+                                    (this.database ?? '').trim() !== (this.initialDatabase ?? '').trim() ||
+                                    (this.periodIndicator ?? '').trim() !== (this.initialPeriodIndicator ?? '').trim() ||
+                                    String(this.maxRetries ?? '').trim() !== String(this.initialMaxRetries ?? '').trim();
+                         },
+
+                         openPeriodModal() {
+                             if (!this.baseUrl) {
+                                 window.dispatchEvent(new CustomEvent('flash-message', {
+                                     detail: { type: 'error', message: 'Please enter Service Layer Base URL first.' }
+                                 }));
+                                 return;
+                             }
+                             if (!this.database) {
+                                 window.dispatchEvent(new CustomEvent('flash-message', {
+                                     detail: { type: 'error', message: 'Please select or enter Database Name first.' }
+                                 }));
+                                 return;
+                             }
+                             window.dispatchEvent(new CustomEvent('open-period-modal', {
+                                 detail: { baseUrl: this.baseUrl, database: this.database }
+                             }));
+                         }
+                     }"
+                     @indicator-selected.window="periodIndicator = $event.detail"
+                     @database-selected.window="database = $event.detail">
                     <div class="p-6">
                         <form method="POST" action="{{ route('config.update') }}">
                             @csrf
@@ -16,73 +54,20 @@
                                 <div class="sm:col-span-2">
                                     <label for="base_url" class="block text-sm font-medium text-gray-700">Service Layer Base URL</label>
                                     <div class="mt-1">
-                                        <input type="url" name="base_url" id="base_url" value="{{ old('base_url', $config->base_url) }}" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-lg bg-white/50 backdrop-blur-sm transition-colors focus:bg-white" placeholder="e.g. https://110.239.87.30:65432/b1s/v1/" required>
+                                        <input type="url" name="base_url" id="base_url" x-model="baseUrl" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-lg bg-white/50 backdrop-blur-sm transition-colors focus:bg-white" placeholder="e.g. https://110.239.87.30:65432/b1s/v1/" required>
                                     </div>
                                 </div>
 
                                 <!-- Database Name -->
-                                <div class="sm:col-span-2" x-data="{
-                                    databaseName: '{{ old('database', $config->database) }}',
-                                    openDatabaseModal() {
-                                        const baseUrl = document.getElementById('base_url').value;
-                                        
-                                        if (!baseUrl) {
-                                            window.dispatchEvent(new CustomEvent('flash-message', {
-                                                detail: { type: 'error', message: 'Please enter Base URL first.' }
-                                            }));
-                                            return;
-                                        }
-                                        
-                                        window.dispatchEvent(new CustomEvent('open-database-modal', {
-                                            detail: { baseUrl: baseUrl }
-                                        }));
-                                    },
-                                    handleDatabaseSelected(dbName) {
-                                        this.databaseName = dbName;
-                                    }
-                                }"
-                                @database-selected.window="handleDatabaseSelected($event.detail)">
+                                <div class="sm:col-span-2">
                                     <label for="database" class="block text-sm font-medium text-gray-700">Database Name</label>
                                     <div class="mt-1 flex space-x-3">
-                                        <input type="text" name="database" id="database" x-model="databaseName" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-lg bg-white/50 backdrop-blur-sm transition-colors focus:bg-white" placeholder="e.g. SBODEMOUS">
-                                        <!-- Fetch Database Name from SAP Button Disabled (Commented out per user request)
-                                        <button type="button" @click="openDatabaseModal()" class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-sm w-48">
-                                            Fetch from SAP
-                                        </button>
-                                        -->
+                                        <input type="text" name="database" id="database" x-model="database" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-lg bg-white/50 backdrop-blur-sm transition-colors focus:bg-white" placeholder="e.g. SBODEMOUS">
                                     </div>
                                 </div>
 
                                 <!-- Period Indicator -->
-                                <div class="sm:col-span-2" x-data="{ 
-                                    periodIndicator: '{{ old('period_indicator', $config->period_indicator) }}',
-                                    openPeriodModal() {
-                                        const baseUrl = document.getElementById('base_url').value;
-                                        const db = document.getElementById('database').value;
-                                        
-                                        if (!baseUrl) {
-                                            window.dispatchEvent(new CustomEvent('flash-message', {
-                                                detail: { type: 'error', message: 'Please enter Service Layer Base URL first.' }
-                                            }));
-                                            return;
-                                        }
-
-                                        if (!db) {
-                                            window.dispatchEvent(new CustomEvent('flash-message', {
-                                                detail: { type: 'error', message: 'Please select or enter Database Name first.' }
-                                            }));
-                                            return;
-                                        }
-                                        
-                                        window.dispatchEvent(new CustomEvent('open-period-modal', {
-                                            detail: { baseUrl: baseUrl, database: db }
-                                        }));
-                                    },
-                                    handleIndicatorSelected(indicator) {
-                                        this.periodIndicator = indicator;
-                                    }
-                                }"
-                                @indicator-selected.window="handleIndicatorSelected($event.detail)">
+                                <div class="sm:col-span-2">
                                     <label for="period_indicator" class="block text-sm font-medium text-gray-700">Period Indicator</label>
                                     <div class="mt-1 flex space-x-3">
                                         <input type="text" name="period_indicator" id="period_indicator" x-model="periodIndicator" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-lg bg-white/50 backdrop-blur-sm transition-colors focus:bg-white" placeholder="e.g. 2026">
@@ -97,7 +82,7 @@
                                 <div class="sm:col-span-2">
                                     <label for="max_retries" class="block text-sm font-medium text-gray-700">Maximum Service Layer Retries</label>
                                     <div class="mt-1">
-                                        <input type="number" name="max_retries" id="max_retries" value="{{ old('max_retries', $config->max_retries ?? 3) }}" min="1" max="10" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-lg bg-white/50 backdrop-blur-sm transition-colors focus:bg-white" required>
+                                        <input type="number" name="max_retries" id="max_retries" x-model="maxRetries" min="1" max="10" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-lg bg-white/50 backdrop-blur-sm transition-colors focus:bg-white" required>
                                     </div>
                                     <p class="mt-2 text-xs text-gray-500">Number of automatic retries (default 3) when connection or 5xx server errors occur during SAP Service Layer communication.</p>
                                 </div>
@@ -130,7 +115,10 @@
                                     @endif
                                 </div>
 
-                                <button type="submit" class="inline-flex justify-center py-2.5 px-6 border border-transparent shadow-md text-sm font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-500 hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <button type="submit" 
+                                        :disabled="!isDirty"
+                                        :class="!isDirty ? 'opacity-50 cursor-not-allowed bg-gray-400 border-transparent shadow-none hover:bg-gray-400 hover:transform-none' : 'bg-indigo-600 hover:bg-indigo-500 hover:shadow-lg transform hover:-translate-y-0.5 active:scale-95 cursor-pointer'"
+                                        class="inline-flex justify-center py-2.5 px-6 border border-transparent shadow-md text-sm font-semibold rounded-lg text-white transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                     Save Configuration
                                 </button>
                             </div>
