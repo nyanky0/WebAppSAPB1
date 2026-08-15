@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\SystemLog;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -17,7 +19,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Handle an authentication attempt.
+     * Handle an authentication attempt with Brute-Force Rate Limiting & Audit Logging.
      */
     public function login(Request $request)
     {
@@ -26,15 +28,34 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
+        // 1. Rate Limiting Key based on username and IP address
+        $throttleKey = Str::lower($credentials['username']) . '|' . $request->ip();
+
+        // 2. Check if user exceeded 5 login attempts per minute
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            
+            SystemLog::logAction('security_alert', 'Login Throttled', "Excessive failed login attempts for username '{$credentials['username']}' from IP {$request->ip()}");
+
+            return back()->withErrors([
+                'username' => "Too many login attempts. Please try again in {$seconds} seconds.",
+            ])->onlyInput('username');
+        }
+
+        // 3. Attempt Authentication with Parameterized PDO Queries (Safe against SQL Injection)
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            RateLimiter::clear($throttleKey);
             $request->session()->regenerate();
             
             SystemLog::logAction('login', 'User Logged In', 'Successful login via web interface');
 
-            // Redirect to the user's last intended URL (e.g. if they timed out on the Items page, 
-            // it will redirect them back to Items). If there is no previous state, it defaults to '/dashboard'.
             return redirect()->intended('/dashboard');
         }
+
+        // 4. Record failed login attempt and hit rate limiter
+        RateLimiter::hit($throttleKey, 60);
+
+        SystemLog::logAction('login_failed', 'Failed Login Attempt', "Failed login attempt for username '{$credentials['username']}' from IP {$request->ip()}");
 
         return back()->withErrors([
             'username' => 'The provided credentials do not match our records.',
