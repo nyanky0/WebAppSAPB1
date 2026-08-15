@@ -49,61 +49,7 @@ class BranchController extends Controller
 
     public function sync(Request $request)
     {
-        set_time_limit(300);
-        $config = Config::first();
-        if (!$config || !$config->base_url || !$config->database) {
-            return back()->with('error', 'Configuration is missing.');
-        }
-
-        try {
-            $sap = new SapService($config);
-            $user = auth()->user();
-
-            $branchesSynced = 0;
-            $response = null;
-
-            try {
-                $response = $sap->get($user, 'Branches');
-            } catch (\Exception $ex) {
-                $response = $sap->get($user, 'BusinessPlaces');
-            }
-
-            if (isset($response['value']) && is_array($response['value'])) {
-                DB::beginTransaction();
-                foreach ($response['value'] as $bData) {
-                    $code = $bData['Code'] ?? ($bData['BPLID'] ?? ($bData['CodeNumber'] ?? null));
-                    if ($code === null) continue;
-
-                    $name = $bData['Name'] ?? ($bData['BPLName'] ?? "Branch {$code}");
-                    $description = $bData['Description'] ?? ($bData['BPLName'] ?? $name);
-                    $disabled = ($bData['Disabled'] ?? ($bData['Active'] ?? 'tNO')) === 'tYES' || ($bData['Disabled'] ?? false) === true;
-
-                    Branch::updateOrCreate(
-                        ['code' => (string) $code],
-                        [
-                            'name' => $name,
-                            'description' => $description,
-                            'disabled' => $disabled,
-                            'sync_status' => 'Synced',
-                            'sap_status' => 'Created',
-                            'sync_error' => null
-                        ]
-                    );
-                    $branchesSynced++;
-                }
-                DB::commit();
-            }
-
-            SystemLog::logAction('sap', 'Synced Branches', "Successfully synced {$branchesSynced} Branches from SAP.");
-
-            return redirect()->route('branches.index')->with('success', "Successfully synced {$branchesSynced} Branches from SAP.");
-
-        } catch (\Exception $e) {
-            if (DB::transactionLevel() > 0) {
-                DB::rollBack();
-            }
-            Log::error("Branches Sync Error: " . $e->getMessage());
-            return back()->with('error', 'Failed to sync Branches: ' . $e->getMessage());
-        }
+        $sapController = app(SapServiceLayerController::class);
+        return $sapController->syncBranches();
     }
 }

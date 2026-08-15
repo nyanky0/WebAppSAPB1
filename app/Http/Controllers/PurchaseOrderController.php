@@ -210,109 +210,20 @@ class PurchaseOrderController extends Controller
         return view('purchase-order.show', compact('purchaseOrder', 'basePr'));
     }
 
-    public function sync(PurchaseOrder $purchaseOrder, SapService $sap)
+    public function sync(PurchaseOrder $purchaseOrder, SapServiceLayerManager $sapManager)
     {
-        $config = Config::first();
-        if (!$config || !$config->base_url || !$config->database) {
-            return back()->with('error', 'Configuration is missing.');
-        }
-
-        $syncResult = $this->pushToSap($purchaseOrder, $sap);
-        if ($syncResult['success']) {
+        $result = $sapManager->pushPurchaseOrder($purchaseOrder);
+        if ($result['success']) {
             return back()->with('success', 'Purchase Order synced to SAP successfully!');
         } else {
-            return back()->with('error', 'Failed to sync Purchase Order: ' . $syncResult['message']);
+            return back()->with('error', 'Failed to sync Purchase Order: ' . $result['message']);
         }
     }
 
-    public function pushToSap(PurchaseOrder $po, SapService $sap)
+    public function pushToSap(PurchaseOrder $po, SapServiceLayerManager $sapManager = null)
     {
-        try {
-            $user = $po->created_by ? \App\Models\User::find($po->created_by) : auth()->user();
-            if (!$user) {
-                throw new \Exception("User not found for PO.");
-            }
-
-            $isService = ($po->doc_type === 'dssService');
-            $lines = [];
-
-            foreach ($po->lines as $line) {
-                $linePayload = [
-                    'ItemDescription' => $line->item_description,
-                    'VatGroup' => $line->tax_code ?? $po->tax_code,
-                ];
-
-                if ($isService) {
-                    $linePayload['AccountCode'] = $line->account_code;
-                    $linePayload['LineTotal'] = (float) $line->price;
-                } else {
-                    $linePayload['ItemCode'] = $line->item_code;
-                    $linePayload['Quantity'] = (float) $line->quantity;
-                    $linePayload['UnitPrice'] = (float) $line->price;
-
-                    if (!empty($po->whs_code)) {
-                        $linePayload['WarehouseCode'] = $po->whs_code;
-                    }
-                    if (!empty($line->uom_code)) {
-                        $linePayload['UoMCode'] = $line->uom_code;
-                    }
-                }
-
-                if (!empty($line->costing_code)) $linePayload['CostingCode'] = $line->costing_code;
-                if (!empty($line->costing_code2)) $linePayload['CostingCode2'] = $line->costing_code2;
-                if (!empty($line->costing_code3)) $linePayload['CostingCode3'] = $line->costing_code3;
-                if (!empty($line->costing_code4)) $linePayload['CostingCode4'] = $line->costing_code4;
-                if (!empty($line->costing_code5)) $linePayload['CostingCode5'] = $line->costing_code5;
-
-                // Base Document Linkage (PR -> PO)
-                if (!empty($line->base_type) && !empty($line->base_entry)) {
-                    $linePayload['BaseType'] = (int) $line->base_type; // 1470000113 for PR
-                    $linePayload['BaseEntry'] = (int) $line->base_entry;
-                    if (isset($line->base_line)) {
-                        $linePayload['BaseLine'] = (int) $line->base_line;
-                    }
-                }
-
-                $lines[] = $linePayload;
-            }
-
-            $payload = [
-                'CardCode' => $po->card_code,
-                'DocType' => $po->doc_type ?? 'dssItem',
-                'DocDate' => $po->posting_date,
-                'DocDueDate' => $po->delivery_date,
-                'TaxDate' => $po->document_date,
-                'Comments' => $po->comments,
-                'DocumentLines' => $lines,
-            ];
-
-            $response = $sap->post($user, 'PurchaseOrders', $payload);
-
-            if (isset($response['error'])) {
-                throw new \Exception($response['error']['message']['value'] ?? 'Unknown SAP Error');
-            }
-
-            $po->update([
-                'doc_entry' => $response['DocEntry'] ?? null,
-                'doc_num' => $response['DocNum'] ?? null,
-                'sync_status' => 'Synced',
-                'sap_status' => $response['DocumentStatus'] ?? 'Open',
-                'sync_error' => null
-            ]);
-
-            SystemLog::logAction('sap', 'Synced Purchase Order', "PO #{$po->id} successfully pushed to SAP. DocEntry: " . ($response['DocEntry'] ?? '-'), true);
-
-            return ['success' => true];
-
-        } catch (\Exception $e) {
-            $po->update([
-                'sync_status' => 'Failed',
-                'sync_error' => $e->getMessage()
-            ]);
-            
-            SystemLog::logAction('sap', 'Sync PO Failed', "PO #{$po->id} failed: " . $e->getMessage(), true);
-            
-            return ['success' => false, 'message' => $e->getMessage()];
-        }
+        $manager = $sapManager ?? app(SapServiceLayerManager::class);
+        return $manager->pushPurchaseOrder($po);
     }
+}
 }

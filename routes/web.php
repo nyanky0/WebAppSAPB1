@@ -84,6 +84,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/withholding-taxes', [\App\Http\Controllers\WithholdingTaxController::class, 'index'])->name('withholding-taxes.index');
     Route::post('/withholding-taxes/sync', [\App\Http\Controllers\WithholdingTaxController::class, 'sync'])->name('withholding-taxes.sync');
 
+    // Dedicated SAP Service Layer Controller Sync Routes
+    Route::post('/sap/sync/purchase-orders/{id}', [\App\Http\Controllers\SapServiceLayerController::class, 'syncPurchaseOrder'])->name('sap.sync.po');
+    Route::post('/sap/sync/items', [\App\Http\Controllers\SapServiceLayerController::class, 'syncItems'])->name('sap.sync.items');
+    Route::post('/sap/sync/business-partners', [\App\Http\Controllers\SapServiceLayerController::class, 'syncBusinessPartners'])->name('sap.sync.bp');
+    Route::post('/sap/sync/branches', [\App\Http\Controllers\SapServiceLayerController::class, 'syncBranches'])->name('sap.sync.branches');
+
     Route::get('/branches', [\App\Http\Controllers\BranchController::class, 'index'])->name('branches.index');
     Route::post('/branches/sync', [\App\Http\Controllers\BranchController::class, 'sync'])->name('branches.sync');
     
