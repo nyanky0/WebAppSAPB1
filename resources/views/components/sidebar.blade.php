@@ -41,12 +41,12 @@
             }
         }" class="flex-1 px-2 py-4 space-y-1">
 
-            <!-- Debounced Navigation Search Box with Right-Aligned Search Icon -->
+            <!-- Debounced Navigation Search Box with Spaced Right-Aligned Search Icon -->
             <div x-show="sidebarOpen" class="px-2 mb-3">
                 <div class="relative flex items-center">
-                    <input type="text" x-model.debounce.300ms="searchQuery" placeholder="Search menu..." class="w-full bg-gray-800 text-gray-200 text-xs rounded-md pl-3 pr-8 py-1.5 border border-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder-gray-500">
-                    <div class="absolute right-2.5 flex items-center pointer-events-none text-gray-400">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <input type="text" x-model.debounce.300ms="searchQuery" placeholder="Search menu..." class="w-full bg-gray-800 text-gray-200 text-xs rounded-md pl-3.5 pr-10 py-1.5 border border-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder-gray-400 font-sans tracking-wide">
+                    <div class="absolute right-3 flex items-center pointer-events-none text-gray-400 pl-2 border-l border-gray-700/60 my-0.5">
+                        <svg class="w-4 h-4 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </div>
