@@ -117,9 +117,15 @@
 
                                 <button type="submit" 
                                         :disabled="!isDirty"
-                                        :class="!isDirty ? 'opacity-50 cursor-not-allowed bg-gray-400 border-transparent shadow-none hover:bg-gray-400 hover:transform-none' : 'bg-indigo-600 hover:bg-indigo-500 hover:shadow-lg transform hover:-translate-y-0.5 active:scale-95 cursor-pointer'"
-                                        class="inline-flex justify-center py-2.5 px-6 border border-transparent shadow-md text-sm font-semibold rounded-lg text-white transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    Save Configuration
+                                        :title="!isDirty ? 'No changes detected in configuration settings.' : 'Save Configuration'"
+                                        :class="!isDirty 
+                                            ? 'border border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed shadow-none' 
+                                            : 'border border-transparent text-white bg-indigo-600 hover:bg-indigo-500 hover:shadow-lg transform hover:-translate-y-0.5 active:scale-95 cursor-pointer shadow-md'"
+                                        class="inline-flex items-center space-x-2 py-2.5 px-6 text-sm font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    <svg x-show="!isDirty" class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                    <span>Save Configuration</span>
                                 </button>
                             </div>
                         </form>
