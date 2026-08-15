@@ -79,3 +79,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-08-15 11:36**: refactor: decouple SAP Service Layer communication into dedicated SapServiceLayerController and SapServiceLayerManager
 - **2026-08-15 11:37**: fix: correct namespace backslash in PurchaseOrderController
 - **2026-08-15 11:38**: fix: update syncBranches column mapping to code in SapServiceLayerController
+- **2026-08-15 11:47**: feat: centralize all SAP Service Layer master data integrations and add debounced navigation search
