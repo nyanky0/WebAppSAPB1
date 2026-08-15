@@ -72,3 +72,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-08-14 11:34**: fix: add status column to purchase_requests migration and safely query metrics in DashboardController
 - **2026-08-14 11:36**: feat: redesign dashboard widgets into SAP B1 HANA Fiori modular box-by-box grid cards
 - **2026-08-14 11:39**: refactor: configure Purchase Order as the exclusive transaction document syncing into SAP
+- **2026-08-14 11:41**: config: set APP_DEBUG=false and APP_ENV=production in environment configuration
