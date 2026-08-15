@@ -1,4 +1,4 @@
-# SAP B1 AddOn WebApp - Project System Architecture & Base Brain Configuration
+# IBT Request Fulfillment WebApp - Project System Architecture & Base Brain Configuration
 
 This document serves as the authoritative System Knowledge Base and "Brain Configuration" for the SAP B1 AddOn WebApp project. All future AI assistant chat sessions and developers MUST adhere to these architectural standards and guidelines.
 

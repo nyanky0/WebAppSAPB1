@@ -1,8 +1,12 @@
 <x-guest-layout>
-    <!-- Logos -->
-    <div class="flex flex-col items-center justify-center mb-5 space-y-3">
-        <img src="{{ asset('images/sap-logo.svg') }}" alt="SAP Logo" class="h-8 w-auto object-contain drop-shadow-md">
-        <img src="{{ asset('images/logo.png') }}" alt="SAP B1 AddOn Logo" class="w-20 h-20 object-contain drop-shadow-md transform hover:scale-105 transition-transform duration-300">
+    <!-- Header Logo & App Title -->
+    <div class="flex flex-col items-center justify-center mb-6 space-y-2">
+        <div class="flex items-center space-x-2">
+            <img src="{{ asset('images/sap-logo.svg') }}" alt="SAP Logo" class="h-7 w-auto object-contain drop-shadow-md">
+            <span class="text-xs font-semibold px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full">AddOn</span>
+        </div>
+        <h1 class="text-xl font-bold text-gray-900 tracking-tight text-center mt-1">IBT Request Fulfillment</h1>
+        <p class="text-xs text-gray-500">Sign in to your account to continue</p>
     </div>
 
     <!-- Login Form -->

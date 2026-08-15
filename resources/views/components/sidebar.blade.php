@@ -7,7 +7,7 @@
     <div class="flex items-center justify-center h-16 border-b border-gray-800 px-4">
         <div class="flex items-center space-x-3.5 min-w-0" x-show="sidebarOpen">
             <img src="{{ asset('images/sap-logo.svg') }}" alt="SAP Logo" class="h-6 w-auto object-contain shrink-0">
-            <span class="text-base font-bold text-white tracking-wide whitespace-nowrap">SAP B1 AddOn</span>
+            <span class="text-sm font-bold text-white tracking-wide whitespace-nowrap">IBT Request Fulfillment</span>
         </div>
         <div class="flex items-center justify-center shrink-0" x-show="!sidebarOpen">
             <img src="{{ asset('images/sap-logo.svg') }}" alt="SAP Logo" class="h-6 w-auto object-contain">
