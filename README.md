@@ -76,3 +76,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-08-15 11:27**: config: restore APP_DEBUG=true and APP_ENV=local in environment configuration
 - **2026-08-15 11:30**: security: add rate limiting brute-force protection and failed login audit logging to AuthController
 - **2026-08-15 11:32**: feat: add grouped Tailwind CSS component utilities and cn() classname grouping helper
+- **2026-08-15 11:36**: refactor: decouple SAP Service Layer communication into dedicated SapServiceLayerController and SapServiceLayerManager
