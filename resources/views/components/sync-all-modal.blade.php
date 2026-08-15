@@ -19,8 +19,7 @@
         { name: 'Taxes (VatGroups)', route: '{{ route('sap.sync.taxes') }}', status: 'pending', message: '' },
         { name: 'Withholding Taxes', route: '{{ route('sap.sync.wtax') }}', status: 'pending', message: '' },
         { name: 'Branches', route: '{{ route('sap.sync.branches') }}', status: 'pending', message: '' },
-        { name: 'Business Partners', route: '{{ route('sap.sync.bp') }}', status: 'pending', message: '' },
-        { name: 'Period Indicators', route: '{{ route('sap.sync.period-indicators') }}', status: 'pending', message: '' }
+        { name: 'Business Partners', route: '{{ route('sap.sync.bp') }}', status: 'pending', message: '' }
     ],
     get progressPercent() {
         return Math.round((this.completedCount / this.tasks.length) * 100);
@@ -33,10 +32,11 @@
         });
     },
     copyLogs() {
+        if (this.isSyncing) return;
         const text = this.logs.map(l => `[${l.time}] ${l.text}`).join('\n');
         navigator.clipboard.writeText(text).then(() => {
             this.copied = true;
-            setTimeout(() => this.copied = false, 2000);
+            setTimeout(() => this.copied = false, 2500);
         }).catch(err => {
             console.error('Failed to copy logs: ', err);
         });
@@ -140,12 +140,12 @@
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-lg font-bold">Sync Everything From SAP</h3>
+                        <h3 class="text-lg font-extrabold text-white tracking-tight">Sync Everything From SAP</h3>
                         <p class="text-xs text-indigo-200">Bulk Master Data Synchronization Engine</p>
                     </div>
                 </div>
 
-                <button x-show="!isSyncing" @click="showModal = false" type="button" class="text-indigo-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-all hover:-translate-y-0.5 active:scale-95">
+                <button x-show="!isSyncing" @click="showModal = false" type="button" class="text-indigo-200 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-all hover:-translate-y-0.5 active:scale-95 cursor-pointer">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -153,7 +153,7 @@
             </div>
 
             <!-- Modal Content Body -->
-            <div class="p-6 space-y-6">
+            <div class="p-6 space-y-5">
                 
                 <!-- Live Counter & Progress Bar Header -->
                 <div>
@@ -179,37 +179,46 @@
                     </div>
                 </div>
 
-                <!-- Task Cards Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-56 overflow-y-auto pr-1">
+                <!-- Single-Column Vertical Task List (Fixed 6 Items Visible, Height [270px]) -->
+                <div class="flex flex-col space-y-2 h-[270px] overflow-y-auto pr-2">
                     <template x-for="(t, idx) in tasks" :key="idx">
-                        <div class="p-2.5 rounded-lg border text-xs flex items-center justify-between transition-colors"
+                        <div class="h-10 px-3.5 py-2 rounded-lg border text-xs flex items-center justify-between transition-colors shrink-0"
                              :class="{
-                                'bg-indigo-50/70 border-indigo-200 text-indigo-900 font-medium shadow-sm': t.status === 'syncing',
-                                'bg-green-50/60 border-green-200 text-green-800': t.status === 'done',
-                                'bg-red-50/60 border-red-200 text-red-800': t.status === 'error',
+                                'bg-indigo-50/80 border-indigo-300 text-indigo-900 font-medium shadow-sm': t.status === 'syncing',
+                                'bg-green-50/70 border-green-300 text-green-800': t.status === 'done',
+                                'bg-red-50/70 border-red-300 text-red-800': t.status === 'error',
                                 'bg-gray-50 border-gray-200 text-gray-500': t.status === 'pending'
                              }">
-                            <div class="flex items-center space-x-2 truncate">
-                                <span class="font-bold text-gray-400" x-text="`${idx + 1}.`"></span>
-                                <span class="truncate font-semibold" x-text="t.name"></span>
+                            <div class="flex items-center space-x-2.5 truncate">
+                                <span class="font-bold text-gray-400 w-5" x-text="`${idx + 1}.`"></span>
+                                <span class="truncate font-semibold text-gray-800" x-text="t.name"></span>
                             </div>
                             
                             <!-- Status Indicator Icons -->
-                            <div class="shrink-0 ml-2">
+                            <div class="shrink-0 ml-3 flex items-center space-x-2">
                                 <template x-if="t.status === 'syncing'">
-                                    <svg class="w-4 h-4 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
+                                    <span class="inline-flex items-center text-indigo-600 font-medium text-[11px]">
+                                        <svg class="w-4 h-4 animate-spin text-indigo-600 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        Syncing...
+                                    </span>
                                 </template>
                                 <template x-if="t.status === 'done'">
-                                    <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                    </svg>
+                                    <span class="inline-flex items-center text-green-600 font-semibold text-[11px]">
+                                        <svg class="w-4 h-4 text-green-600 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        Done
+                                    </span>
                                 </template>
                                 <template x-if="t.status === 'error'">
-                                    <svg class="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
+                                    <span class="inline-flex items-center text-red-600 font-semibold text-[11px]">
+                                        <svg class="w-4 h-4 text-red-600 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        Error
+                                    </span>
                                 </template>
                                 <template x-if="t.status === 'pending'">
                                     <span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Pending</span>
@@ -224,14 +233,16 @@
                     <div class="flex items-center justify-between mb-1.5">
                         <h4 class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Synchronization Activity Log</h4>
                         
-                        <!-- Copy Activity Logs Button -->
+                        <!-- Copy Activity Logs Button (Enabled ONLY when finished or cancelled) -->
                         <button type="button" 
                                 @click="copyLogs()" 
-                                class="inline-flex items-center space-x-1.5 px-3 py-1 bg-gray-800 hover:bg-gray-700 text-gray-200 hover:text-white rounded-lg text-xs font-semibold transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-95 focus:outline-none cursor-pointer">
+                                :disabled="isSyncing"
+                                :class="isSyncing ? 'opacity-40 cursor-not-allowed bg-gray-600 text-gray-400 shadow-none' : 'bg-gray-800 hover:bg-gray-700 text-gray-200 hover:text-white hover:shadow-md hover:-translate-y-0.5 active:scale-95 cursor-pointer'"
+                                class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all focus:outline-none">
                             <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
-                            <span x-text="copied ? 'Logs Copied!' : 'Copy Logs'"></span>
+                            <span x-text="copied ? 'Logs Copied to Clipboard!' : (isSyncing ? 'Copy Logs (Syncing...)' : 'Copy Logs')"></span>
                         </button>
                     </div>
 
@@ -258,12 +269,12 @@
                         ✅ Master Data synchronization finished.
                     </span>
                     <span x-show="cancelled" class="text-amber-600 font-semibold">
-                        ⚠️ Sync cancelled by user.
+                        ⚠️ Sync cancelled by user. Staged data rolled back.
                     </span>
                 </div>
 
                 <div class="flex items-center space-x-3">
-                    <!-- Cancel Button -->
+                    <!-- Cancel Sync Button -->
                     <button x-show="isSyncing" 
                             @click="cancelSync()" 
                             type="button" 

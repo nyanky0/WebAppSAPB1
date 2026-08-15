@@ -77,9 +77,12 @@ class SapServiceLayerController extends Controller
     /**
      * Sync Master Data Items from SAP.
      */
+    /**
+     * Sync Master Data Items from SAP.
+     */
     public function syncItems()
     {
-        $result = $this->manager->fetchFromSap('Items');
+        $result = $this->manager->fetchFromSap('Items?$select=ItemCode,ItemName,ForeignName,ItemsGroupCode,CustomsGroupCode,SalesUnit,InventoryUOM');
         if (!$result['success']) {
             return $this->respondWithSyncResult(false, 'Failed to sync Items from SAP: ' . $result['message']);
         }
@@ -110,7 +113,7 @@ class SapServiceLayerController extends Controller
      */
     public function syncBusinessPartners()
     {
-        $result = $this->manager->fetchFromSap('BusinessPartners');
+        $result = $this->manager->fetchFromSap('BusinessPartners?$select=CardCode,CardName,CardType,GroupCode,Phone1,EmailAddress,Currency');
         if (!$result['success']) {
             return $this->respondWithSyncResult(false, 'Failed to sync Business Partners: ' . $result['message']);
         }
@@ -141,9 +144,9 @@ class SapServiceLayerController extends Controller
      */
     public function syncBranches()
     {
-        $result = $this->manager->fetchFromSap('Branches');
+        $result = $this->manager->fetchFromSap('Branches?$select=Code,Name,Description,Disabled');
         if (!$result['success']) {
-            $result = $this->manager->fetchFromSap('BusinessPlaces');
+            $result = $this->manager->fetchFromSap('BusinessPlaces?$select=BPLID,BPLName,Disabled');
         }
 
         if (!$result['success']) {
@@ -178,7 +181,7 @@ class SapServiceLayerController extends Controller
      */
     public function syncChartOfAccounts()
     {
-        $result = $this->manager->fetchFromSap('ChartOfAccounts');
+        $result = $this->manager->fetchFromSap('ChartOfAccounts?$select=Code,Name,AcctCode,AcctName');
         if (!$result['success']) {
             return $this->respondWithSyncResult(false, 'Failed to sync Chart of Accounts: ' . $result['message']);
         }
@@ -209,7 +212,7 @@ class SapServiceLayerController extends Controller
      */
     public function syncCostCenters()
     {
-        $result = $this->manager->fetchFromSap('ProfitCenters');
+        $result = $this->manager->fetchFromSap('ProfitCenters?$select=CenterCode,CenterName,InWhichDimension');
         if (!$result['success']) {
             return $this->respondWithSyncResult(false, 'Failed to sync Cost Centers: ' . $result['message']);
         }
@@ -239,7 +242,7 @@ class SapServiceLayerController extends Controller
      */
     public function syncDimensions()
     {
-        $result = $this->manager->fetchFromSap('Dimensions');
+        $result = $this->manager->fetchFromSap('Dimensions?$select=DimensionCode,DimensionName');
         if (!$result['success']) {
             return $this->respondWithSyncResult(false, 'Failed to sync Dimensions: ' . $result['message']);
         }
@@ -268,14 +271,14 @@ class SapServiceLayerController extends Controller
      */
     public function syncItemGroups()
     {
-        $result = $this->manager->fetchFromSap('ItemGroups');
+        $result = $this->manager->fetchFromSap('ItemGroups?$select=Number,ItmsGrpCod,GroupName');
         if (!$result['success']) {
             return $this->respondWithSyncResult(false, 'Failed to sync Item Groups: ' . $result['message']);
         }
 
         $count = 0;
         foreach ($result['data'] as $data) {
-            $code = (string) ($data['Number'] ?? $data['GroupCode'] ?? '');
+            $code = (string) ($data['Number'] ?? $data['ItmsGrpCod'] ?? $data['GroupCode'] ?? '');
             if (empty($code)) continue;
 
             ItemGroup::updateOrCreate(
@@ -297,7 +300,7 @@ class SapServiceLayerController extends Controller
      */
     public function syncTaxes()
     {
-        $result = $this->manager->fetchFromSap('VatGroups');
+        $result = $this->manager->fetchFromSap('VatGroups?$select=Code,Name,Rate');
         if (!$result['success']) {
             return $this->respondWithSyncResult(false, 'Failed to sync Taxes from SAP: ' . $result['message']);
         }
@@ -327,7 +330,7 @@ class SapServiceLayerController extends Controller
      */
     public function syncUoms()
     {
-        $result = $this->manager->fetchFromSap('UnitOfMeasurements');
+        $result = $this->manager->fetchFromSap('UnitOfMeasurements?$select=Code,Name');
         if (!$result['success']) {
             return $this->respondWithSyncResult(false, 'Failed to sync UOMs: ' . $result['message']);
         }
@@ -356,7 +359,7 @@ class SapServiceLayerController extends Controller
      */
     public function syncWarehouses()
     {
-        $result = $this->manager->fetchFromSap('Warehouses');
+        $result = $this->manager->fetchFromSap('Warehouses?$select=WarehouseCode,WarehouseName');
         if (!$result['success']) {
             return $this->respondWithSyncResult(false, 'Failed to sync Warehouses: ' . $result['message']);
         }
@@ -385,7 +388,11 @@ class SapServiceLayerController extends Controller
      */
     public function syncWithholdingTaxes()
     {
-        $result = $this->manager->fetchFromSap('WithholdingTaxCodes');
+        $result = $this->manager->fetchFromSap('WithholdingTaxCodes?$select=WTCode,WTName,Rate');
+        if (!$result['success']) {
+            $result = $this->manager->fetchFromSap('WithholdingTax?$select=WTCode,WTName,Rate');
+        }
+
         if (!$result['success']) {
             return $this->respondWithSyncResult(false, 'Failed to sync Withholding Taxes: ' . $result['message']);
         }
