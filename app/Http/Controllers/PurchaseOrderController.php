@@ -220,10 +220,9 @@ class PurchaseOrderController extends Controller
         }
     }
 
-    public function pushToSap(PurchaseOrder $po, SapServiceLayerManager $sapManager = null)
+    public function pushToSap(PurchaseOrder $po, ?SapServiceLayerManager $sapManager = null)
     {
         $manager = $sapManager ?? app(SapServiceLayerManager::class);
         return $manager->pushPurchaseOrder($po);
     }
-}
 }

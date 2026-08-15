@@ -13,7 +13,7 @@ class SapServiceLayerManager
 {
     protected $sap;
 
-    public function __construct(SapService $sap = null)
+    public function __construct(?SapService $sap = null)
     {
         $config = Config::first();
         if ($config && $config->base_url) {

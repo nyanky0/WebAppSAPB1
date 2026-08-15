@@ -14,7 +14,7 @@ class SapService
 
     protected $maxRetries;
 
-    public function __construct(Config $config = null)
+    public function __construct(?Config $config = null)
     {
         $config = $config ?? Config::first();
         if (!$config || !$config->base_url) {
