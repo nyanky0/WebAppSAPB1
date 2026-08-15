@@ -103,18 +103,28 @@ class SapServiceLayerController extends Controller
     {
         $result = $this->manager->fetchFromSap('Branches');
         if (!$result['success']) {
-            return back()->with('error', 'Failed to sync Branches: ' . $result['message']);
+            $result = $this->manager->fetchFromSap('BusinessPlaces');
+        }
+
+        if (!$result['success']) {
+            return back()->with('error', 'Failed to sync Branches from SAP: ' . $result['message']);
         }
 
         $branches = $result['data'];
         $count = 0;
 
         foreach ($branches as $data) {
+            $code = (string) ($data['Code'] ?? $data['BPLID'] ?? $data['Name'] ?? '');
+            if (empty($code)) continue;
+
             Branch::updateOrCreate(
-                ['bpl_id' => $data['BPLID'] ?? $data['Code'] ?? $data['Name']],
+                ['code' => $code],
                 [
-                    'name' => $data['Name'] ?? $data['BPLName'] ?? '',
-                    'description' => $data['Description'] ?? $data['BPLName'] ?? '',
+                    'name' => $data['Name'] ?? $data['BPLName'] ?? $code,
+                    'description' => $data['Description'] ?? $data['BPLName'] ?? $code,
+                    'disabled' => ($data['Disabled'] ?? 'tNO') === 'tYES',
+                    'sync_status' => 'Synced',
+                    'sap_status' => 'Created',
                 ]
             );
             $count++;
