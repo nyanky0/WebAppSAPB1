@@ -58,6 +58,7 @@ class PurchaseQuotationController extends Controller
         $warehouses = Warehouse::where('is_active', true)->get();
         $uoms = \App\Models\Uom::all();
         $costCenters = \App\Models\CostCenter::where('is_active', true)->where('center_code', 'NOT ILIKE', 'Centr_z%')->orderBy('center_code')->get();
+        $items = \App\Models\Item::where('is_active', true)->orderBy('item_code')->get();
 
         $prefilledData = null;
         if ($request->filled('from_pr')) {
@@ -91,7 +92,7 @@ class PurchaseQuotationController extends Controller
             }
         }
 
-        return view('purchase-quotation.create', compact('vendors', 'taxes', 'warehouses', 'uoms', 'costCenters', 'prefilledData'));
+        return view('purchase-quotation.create', compact('vendors', 'taxes', 'warehouses', 'uoms', 'costCenters', 'items', 'prefilledData'));
     }
 
     public function getRequisitionsByVendor(Request $request)

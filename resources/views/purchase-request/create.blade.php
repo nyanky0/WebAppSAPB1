@@ -105,7 +105,7 @@
                                     
                                     <template x-if="docType === 'dssService'">
                                         <td class="px-2 py-2">
-                                            <select :name="'lines['+index+'][account_code]'" x-model="line.account_code" class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500">
+                                            <select :name="'lines['+index+'][account_code]'" x-model="line.account_code" class="w-full rounded-md border-gray-300 text-sm py-2 focus:ring-indigo-500">
                                                 <option value="">-- Select Account --</option>
                                                 @foreach($chartOfAccounts as $acc)
                                                     <option value="{{ $acc->code }}">{{ $acc->code }} - {{ $acc->name }}</option>
@@ -116,27 +116,32 @@
 
                                     <template x-if="docType === 'dssItem'">
                                         <td class="px-2 py-2">
-                                            <input type="text" :name="'lines['+index+'][item_code]'" x-model="line.item_code" @change="fetchStock(index)" placeholder="Item Code..." class="w-full rounded-md border-gray-300 text-xs font-mono focus:ring-indigo-500">
+                                            <select :name="'lines['+index+'][item_code]'" x-model="line.item_code" @change="fetchStock(index); updateItemDescription($event, index)" class="w-full rounded-md border-gray-300 text-sm py-2 font-mono focus:ring-indigo-500">
+                                                <option value="">-- Select Item --</option>
+                                                @foreach($items as $item)
+                                                    <option value="{{ $item->item_code }}" data-name="{{ $item->item_name }}">{{ $item->item_code }} - {{ $item->item_name }}</option>
+                                                @endforeach
+                                            </select>
                                         </td>
                                     </template>
 
                                     <td class="px-2 py-2">
-                                        <input type="text" :name="'lines['+index+'][item_description]'" x-model="line.item_description" placeholder="Description..." class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500">
+                                        <input type="text" :name="'lines['+index+'][item_description]'" x-model="line.item_description" placeholder="Description..." class="w-full rounded-md border-gray-300 text-sm py-2 focus:ring-indigo-500">
                                     </td>
 
                                     <template x-if="docType === 'dssItem'">
                                         <td class="px-2 py-2">
-                                            <input type="number" step="any" :name="'lines['+index+'][quantity]'" x-model="line.quantity" class="w-full rounded-md border-gray-300 text-xs text-right focus:ring-indigo-500">
+                                            <input type="number" step="any" :name="'lines['+index+'][quantity]'" x-model="line.quantity" class="w-full rounded-md border-gray-300 text-sm py-2 text-right focus:ring-indigo-500">
                                         </td>
                                     </template>
 
                                     <td class="px-2 py-2">
-                                        <input type="number" step="any" :name="'lines['+index+'][price]'" x-model="line.price" class="w-full rounded-md border-gray-300 text-xs text-right font-mono focus:ring-indigo-500">
+                                        <input type="number" step="any" :name="'lines['+index+'][price]'" x-model="line.price" class="w-full rounded-md border-gray-300 text-sm py-2 text-right font-mono focus:ring-indigo-500">
                                     </td>
 
                                     <template x-if="docType === 'dssItem'">
                                         <td class="px-2 py-2">
-                                            <select :name="'lines['+index+'][whs_code]'" x-model="line.whs_code" @change="onWhsChange(index)" class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500">
+                                            <select :name="'lines['+index+'][whs_code]'" x-model="line.whs_code" @change="onWhsChange(index)" class="w-full rounded-md border-gray-300 text-sm py-2 focus:ring-indigo-500">
                                                 <option value="">Select Warehouse</option>
                                                 @foreach($warehouses as $wh)
                                                     <option value="{{ $wh->whs_code }}">{{ $wh->whs_code }} - {{ $wh->whs_name }}</option>
@@ -154,7 +159,7 @@
                                     </template>
 
                                     <td class="px-2 py-2">
-                                        <select :name="'lines['+index+'][costing_code]'" x-model="line.costing_code" class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500">
+                                        <select :name="'lines['+index+'][costing_code]'" x-model="line.costing_code" class="w-full rounded-md border-gray-300 text-sm py-2 focus:ring-indigo-500">
                                             <option value="">None</option>
                                             @foreach($costCenters as $cc)
                                                 <option value="{{ $cc->center_code }}">{{ $cc->center_code }} - {{ $cc->center_name }}</option>
@@ -219,6 +224,13 @@
                     const stockMap = this.lines[index].stockMap || [];
                     const found = stockMap.find(s => s.whs_code === whsCode);
                     this.lines[index].on_hand_qty = found ? found.on_hand_qty : 0;
+                },
+                updateItemDescription(event, index) {
+                    const selectedOption = event.target.options[event.target.selectedIndex];
+                    const itemName = selectedOption.getAttribute('data-name');
+                    if (itemName) {
+                        this.lines[index].item_description = itemName;
+                    }
                 }
             }
         }

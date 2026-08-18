@@ -26,4 +26,14 @@ class Item extends Model
         'sap_status',
         'sync_error'
     ];
+
+    public function uomGroup()
+    {
+        return $this->belongsTo(UomGroup::class, 'uom_group', 'abs_entry');
+    }
+
+    public function itemGroupRel()
+    {
+        return $this->belongsTo(ItemGroup::class, 'item_group', 'group_code');
+    }
 }

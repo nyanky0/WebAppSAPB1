@@ -19,12 +19,12 @@ class ItemGroupController extends Controller
         
         if ($request->has('search')) {
             $search = $request->get('search');
-            $query->where('sap_number', 'ilike', "%{$search}%")
+            $query->where('group_code', 'ilike', "%{$search}%")
                   ->orWhere('group_name', 'ilike', "%{$search}%");
         }
         
         // Sorting
-        $sort = $request->get('sort', 'id');
+        $sort = $request->get('sort', 'group_code');
         $direction = $request->get('direction', 'asc');
         $query->orderBy($sort, $direction);
         
@@ -114,8 +114,12 @@ class ItemGroupController extends Controller
                 }
             }
             
+            // Update group_code with SAP Number if available
+            if ($sapNumber) {
+                $group->group_code = $sapNumber;
+            }
+            
             $group->update([
-                'sap_number' => $sapNumber,
                 'sync_status' => 'Synced',
                 'sap_status' => 'Created',
                 'sync_error' => null

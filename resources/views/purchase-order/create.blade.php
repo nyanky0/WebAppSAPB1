@@ -124,7 +124,7 @@
                                     <!-- Service Account Selection -->
                                     <template x-if="docType === 'dssService'">
                                         <td class="px-2 py-2">
-                                            <select :name="'lines['+index+'][account_code]'" x-model="line.account_code" @change="onAccountChange(index)" class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500 focus:border-indigo-500">
+                                            <select :name="'lines['+index+'][account_code]'" x-model="line.account_code" @change="onAccountChange(index)" class="w-full rounded-md border-gray-300 text-sm py-2 focus:ring-indigo-500 focus:border-indigo-500">
                                                 <option value="">-- Select Account --</option>
                                                 @foreach($chartOfAccounts as $acc)
                                                     <option value="{{ $acc->code }}" data-name="{{ $acc->name }}">{{ $acc->code }} - {{ $acc->name }}</option>
@@ -137,30 +137,35 @@
                                     <!-- Item Selection -->
                                     <template x-if="docType === 'dssItem'">
                                         <td class="px-2 py-2">
-                                            <input type="text" :name="'lines['+index+'][item_code]'" x-model="line.item_code" placeholder="Item Code..." class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500 focus:border-indigo-500 font-mono">
+                                            <select :name="'lines['+index+'][item_code]'" x-model="line.item_code" @change="updateItemDescription($event, index)" class="w-full rounded-md border-gray-300 text-sm py-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono">
+                                                <option value="">-- Select Item --</option>
+                                                @foreach($items as $item)
+                                                    <option value="{{ $item->item_code }}" data-name="{{ $item->item_name }}">{{ $item->item_code }} - {{ $item->item_name }}</option>
+                                                @endforeach
+                                            </select>
                                         </td>
                                     </template>
 
                                     <td class="px-2 py-2">
-                                        <input type="text" :name="'lines['+index+'][item_description]'" x-model="line.item_description" placeholder="Description..." class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500 focus:border-indigo-500">
+                                        <input type="text" :name="'lines['+index+'][item_description]'" x-model="line.item_description" placeholder="Description..." class="w-full rounded-md border-gray-300 text-sm py-2 focus:ring-indigo-500 focus:border-indigo-500">
                                     </td>
 
                                     <!-- Quantity -->
                                     <template x-if="docType === 'dssItem'">
                                         <td class="px-2 py-2">
-                                            <input type="number" step="any" :name="'lines['+index+'][quantity]'" x-model="line.quantity" class="w-full rounded-md border-gray-300 text-xs text-right focus:ring-indigo-500 focus:border-indigo-500">
+                                            <input type="number" step="any" :name="'lines['+index+'][quantity]'" x-model="line.quantity" class="w-full rounded-md border-gray-300 text-sm py-2 text-right focus:ring-indigo-500 focus:border-indigo-500">
                                         </td>
                                     </template>
 
                                     <!-- Price -->
                                     <td class="px-2 py-2">
-                                        <input type="number" step="any" :name="'lines['+index+'][price]'" x-model="line.price" class="w-full rounded-md border-gray-300 text-xs text-right focus:ring-indigo-500 focus:border-indigo-500 font-mono">
+                                        <input type="number" step="any" :name="'lines['+index+'][price]'" x-model="line.price" class="w-full rounded-md border-gray-300 text-sm py-2 text-right focus:ring-indigo-500 focus:border-indigo-500 font-mono">
                                     </td>
 
                                     <!-- UOM -->
                                     <template x-if="docType === 'dssItem'">
                                         <td class="px-2 py-2">
-                                            <select :name="'lines['+index+'][uom_code]'" x-model="line.uom_code" class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500 focus:border-indigo-500">
+                                            <select :name="'lines['+index+'][uom_code]'" x-model="line.uom_code" class="w-full rounded-md border-gray-300 text-sm py-2 focus:ring-indigo-500 focus:border-indigo-500">
                                                 <option value="">Default</option>
                                                 @foreach($uoms as $u)
                                                     <option value="{{ $u->code }}">{{ $u->code }}</option>
@@ -171,7 +176,7 @@
 
                                     <!-- Cost Center -->
                                     <td class="px-2 py-2">
-                                        <select :name="'lines['+index+'][costing_code]'" x-model="line.costing_code" class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500 focus:border-indigo-500">
+                                        <select :name="'lines['+index+'][costing_code]'" x-model="line.costing_code" class="w-full rounded-md border-gray-300 text-sm py-2 focus:ring-indigo-500 focus:border-indigo-500">
                                             <option value="">None</option>
                                             @foreach($costCenters as $cc)
                                                 <option value="{{ $cc->center_code }}">{{ $cc->center_code }} - {{ $cc->center_name }}</option>
@@ -235,6 +240,14 @@
 
                 onAccountChange(index) {
                     // Pre-fill account_name from select option data
+                },
+                
+                updateItemDescription(event, index) {
+                    const selectedOption = event.target.options[event.target.selectedIndex];
+                    const itemName = selectedOption.getAttribute('data-name');
+                    if (itemName) {
+                        this.lines[index].item_description = itemName;
+                    }
                 }
             }
         }

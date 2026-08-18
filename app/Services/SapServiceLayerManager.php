@@ -150,4 +150,50 @@ class SapServiceLayerManager
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
+
+    public function fetchAllFromSap(string $endpoint, array $queryParams = []): array
+    {
+        try {
+            $sap = $this->ensureSapAvailable();
+            $user = auth()->user();
+            
+            $queryString = '';
+            if (!empty($queryParams)) {
+                $queryString = '?' . http_build_query($queryParams);
+            }
+
+            $allData = [];
+            $currentEndpoint = $endpoint . $queryString;
+
+            while ($currentEndpoint) {
+                $response = $sap->get($currentEndpoint, $user);
+
+                if ($response && $response->successful()) {
+                    $json = $response->json();
+                    $values = $json['value'] ?? [];
+                    $allData = array_merge($allData, $values);
+
+                    if (!empty($json['@odata.nextLink']) || !empty($json['odata.nextLink'])) {
+                        $nextLink = $json['@odata.nextLink'] ?? $json['odata.nextLink'];
+                        if (strpos($nextLink, '/b1s/') !== false) {
+                            $parts = explode('/', ltrim($nextLink, '/'));
+                            // slice off 'b1s' and 'v1' / 'v2'
+                            $currentEndpoint = implode('/', array_slice($parts, 2));
+                        } else {
+                            $currentEndpoint = ltrim($nextLink, '/');
+                        }
+                    } else {
+                        $currentEndpoint = null;
+                    }
+                } else {
+                    $body = $response ? $response->body() : 'No response received from SAP Service Layer.';
+                    return ['success' => false, 'message' => $body];
+                }
+            }
+
+            return ['success' => true, 'data' => $allData];
+        } catch (\Throwable $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
 }

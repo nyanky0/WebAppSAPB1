@@ -25,3 +25,12 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# AI Agents & IDE
+.agents/
+.cline/
+.clinerules
+TASK_PROGRESS.md
+test_*.php
+test_*.bat
+set_machine_path.ps1

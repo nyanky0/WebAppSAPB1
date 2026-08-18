@@ -96,3 +96,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-08-15 13:58**: feat: design Windows 11 Fluent mica theme, constrain task list (6 items) & log terminal (6 lines), fix Cancel/Copy buttons, and wrap sync actions in try-catch
 - **2026-08-15 14:01**: fix: replace semi-transparent glass modal with 100% solid white card, dark slate titlebar, solid indigo Copy Logs button, and red Cancel button
 - **2026-08-15 14:10**: fix: add group_code column to item_groups migration and implement 5 modal UI fixes (log height max 6 lines, copy logs grey out, matched close button, explicit red cancel button, explicit dark title text)
+- **2026-08-15 14:23**: fix: update chart_of_accounts, withholding_taxes, and business_partners migrations & models with acct_code, wt_code, and card_code, and constrain log terminal to pitch-black 6 lines max

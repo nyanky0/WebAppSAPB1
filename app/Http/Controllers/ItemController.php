@@ -114,8 +114,8 @@ class ItemController extends Controller
             $groupCode = null;
             if ($item->item_group) {
                 $sapGroup = \App\Models\ItemGroup::where('group_name', $item->item_group)->first();
-                if ($sapGroup && $sapGroup->sap_number) {
-                    $groupCode = $sapGroup->sap_number;
+                if ($sapGroup && $sapGroup->group_code) {
+                    $groupCode = $sapGroup->group_code;
                 }
             }
 

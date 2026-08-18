@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Branch;
 use App\Models\BusinessPartner;
+use App\Models\BpGroup;
 use App\Models\ChartOfAccount;
 use App\Models\Config;
 use App\Models\CostCenter;
@@ -13,7 +14,9 @@ use App\Models\ItemGroup;
 use App\Models\PurchaseOrder;
 use App\Models\Tax;
 use App\Models\Uom;
+use App\Models\UomGroup;
 use App\Models\Warehouse;
+use App\Models\BinLocation;
 use App\Models\WithholdingTax;
 use App\Models\SystemLog;
 use App\Services\SapServiceLayerManager;
@@ -83,7 +86,7 @@ class SapServiceLayerController extends Controller
     public function syncItems()
     {
         try {
-            $result = $this->manager->fetchFromSap('Items?$select=ItemCode,ItemName,ForeignName,ItemsGroupCode,CustomsGroupCode,SalesUnit,InventoryUOM');
+            $result = $this->manager->fetchFromSap('Items?$select=ItemCode,ItemName,ForeignName,ItemsGroupCode,CustomsGroupCode,SalesUnit,InventoryUOM,UoMGroupEntry');
             if (!$result['success']) {
                 return $this->respondWithSyncResult(false, 'Failed to sync Items from SAP: ' . $result['message']);
             }
@@ -97,10 +100,13 @@ class SapServiceLayerController extends Controller
                     [
                         'item_name' => $data['ItemName'] ?? null,
                         'foreign_name' => $data['ForeignName'] ?? null,
-                        'items_group_code' => $data['ItemsGroupCode'] ?? null,
+                        'item_group' => (string)($data['ItemsGroupCode'] ?? ''),
                         'customs_group_code' => $data['CustomsGroupCode'] ?? null,
+                        'uom' => $data['InventoryUOM'] ?? null,
                         'sales_uom' => $data['SalesUnit'] ?? null,
                         'inventory_uom' => $data['InventoryUOM'] ?? null,
+                        'uom_group' => (string)($data['UoMGroupEntry'] ?? ''),
+                        'sync_status' => 'Synced',
                     ]
                 );
                 $count++;
@@ -118,7 +124,7 @@ class SapServiceLayerController extends Controller
     public function syncBusinessPartners()
     {
         try {
-            $result = $this->manager->fetchFromSap('BusinessPartners?$select=CardCode,CardName,CardType,GroupCode,Phone1,EmailAddress,Currency&$top=200');
+            $result = $this->manager->fetchAllFromSap('BusinessPartners?$select=CardCode,CardName,CardType,GroupCode,Phone1,EmailAddress,Currency,ContactEmployees');
             if (!$result['success']) {
                 return $this->respondWithSyncResult(false, 'Failed to sync Business Partners: ' . $result['message']);
             }
@@ -141,6 +147,7 @@ class SapServiceLayerController extends Controller
                         'phone1' => $data['Phone1'] ?? null,
                         'email' => $data['EmailAddress'] ?? null,
                         'currency' => $data['Currency'] ?? null,
+                        'contact_persons' => $data['ContactEmployees'] ?? null,
                         'sync_status' => 'Synced',
                         'sap_status' => 'Created',
                     ]
@@ -154,15 +161,45 @@ class SapServiceLayerController extends Controller
         }
     }
 
+    public function syncBpGroups()
+    {
+        try {
+            $result = $this->manager->fetchAllFromSap('BusinessPartnerGroups?$select=Code,Name,Type');
+            if (!$result['success']) {
+                return $this->respondWithSyncResult(false, 'Failed to sync BP Groups: ' . $result['message']);
+            }
+
+            $count = 0;
+            foreach ($result['data'] as $data) {
+                if (empty($data['Code'])) continue;
+                BpGroup::updateOrCreate(
+                    ['code' => $data['Code']],
+                    [
+                        'name' => $data['Name'] ?? null,
+                        'type' => $data['Type'] ?? null,
+                        'sync_status' => 'Synced',
+                        'sap_status' => 'Created',
+                    ]
+                );
+                $count++;
+            }
+
+            return $this->respondWithSyncResult(true, "Synced {$count} BP Groups from SAP successfully.");
+        } catch (\Throwable $e) {
+            return $this->respondWithSyncResult(false, 'BP Groups sync error: ' . $e->getMessage());
+        }
+    }
+
     /**
      * Sync Master Data Branches from SAP.
      */
     public function syncBranches()
     {
         try {
-            $result = $this->manager->fetchFromSap('Branches?$select=Code,Name,Description,Disabled');
+            $result = $this->manager->fetchAllFromSap('Branches?$select=Code,Name,Description');
+
             if (!$result['success']) {
-                $result = $this->manager->fetchFromSap('BusinessPlaces?$select=BPLID,BPLName,Disabled');
+                $result = $this->manager->fetchAllFromSap('BusinessPlaces?$select=BPLID,BPLName,Disabled');
             }
 
             if (!$result['success']) {
@@ -201,7 +238,7 @@ class SapServiceLayerController extends Controller
     public function syncChartOfAccounts()
     {
         try {
-            $result = $this->manager->fetchFromSap('ChartOfAccounts?$select=Code,Name');
+            $result = $this->manager->fetchAllFromSap('ChartOfAccounts?$select=Code,Name');
             if (!$result['success']) {
                 return $this->respondWithSyncResult(false, 'Failed to sync Chart of Accounts: ' . $result['message']);
             }
@@ -273,7 +310,7 @@ class SapServiceLayerController extends Controller
     public function syncDimensions()
     {
         try {
-            $result = $this->manager->fetchFromSap('Dimensions?$select=DimensionCode,DimensionName');
+            $result = $this->manager->fetchAllFromSap('Dimensions?$select=DimensionCode,DimensionName,DimensionDescription,IsActive');
             if (!$result['success']) {
                 return $this->respondWithSyncResult(false, 'Failed to sync Dimensions: ' . $result['message']);
             }
@@ -287,7 +324,8 @@ class SapServiceLayerController extends Controller
                 Dimension::updateOrCreate(
                     ['dimension_code' => $code],
                     [
-                        'dimension_name' => $data['DimensionName'] ?? $data['Name'] ?? "Dimension {$code}",
+                        'dimension_name' => $data['DimensionDescription'] ?? $data['DimensionName'] ?? "Dimension {$code}",
+                        'is_active' => ($data['IsActive'] ?? 'tYES') === 'tYES',
                         'sync_status' => 'Synced',
                         'sap_status' => 'Created',
                     ]
@@ -337,11 +375,13 @@ class SapServiceLayerController extends Controller
 
     /**
      * Sync Taxes (VatGroups) from SAP.
+     * Fetches from VatGroups (OVTG equivalent) and VatGroups_Lines (VTG1 equivalent)
+     * to properly handle multiple tax rates with effective dates.
      */
     public function syncTaxes()
     {
         try {
-            $result = $this->manager->fetchFromSap('VatGroups?$select=Code,Name');
+            $result = $this->manager->fetchAllFromSap('VatGroups?$select=Code,Name,Inactive,VatGroups_Lines');
             if (!$result['success']) {
                 return $this->respondWithSyncResult(false, 'Failed to sync Taxes from SAP: ' . $result['message']);
             }
@@ -352,16 +392,55 @@ class SapServiceLayerController extends Controller
                 $code = $data['Code'] ?? null;
                 if (!$code) continue;
 
-                Tax::updateOrCreate(
-                    ['code' => $code],
-                    [
-                        'name' => $data['Name'] ?? $code,
-                        'rate' => $data['VatGroups_Lines'][0]['Rate'] ?? $data['Rate'] ?? 0,
-                        'sync_status' => 'Synced',
-                        'sap_status' => 'Created',
-                    ]
-                );
-                $count++;
+                $name = $data['Name'] ?? $code;
+                $locked = ($data['Inactive'] ?? 'tNO') === 'tYES';
+                $lines = $data['VatGroups_Lines'] ?? [];
+
+                // If no lines, create a single record with default rate
+                if (empty($lines)) {
+                    Tax::updateOrCreate(
+                        ['code' => $code, 'date_from' => null],
+                        [
+                            'name' => $name,
+                            'rate' => $data['Rate'] ?? 0,
+                            'date_from' => null,
+                            'date_to' => null,
+                            'locked' => $locked,
+                            'sync_status' => 'Synced',
+                            'sap_status' => 'Created',
+                        ]
+                    );
+                    $count++;
+                } else {
+                    // Create/update a record for each rate line with its effective dates
+                    foreach ($lines as $line) {
+                        $rate = $line['Rate'] ?? 0;
+                        $dateFrom = $line['DateFrom'] ?? $line['dateFrom'] ?? null;
+                        $dateTo = $line['DateTo'] ?? $line['dateTo'] ?? null;
+
+                        // Format dates if they exist
+                        if ($dateFrom) {
+                            $dateFrom = date('Y-m-d', strtotime($dateFrom));
+                        }
+                        if ($dateTo) {
+                            $dateTo = date('Y-m-d', strtotime($dateTo));
+                        }
+
+                        Tax::updateOrCreate(
+                            ['code' => $code, 'date_from' => $dateFrom],
+                            [
+                                'name' => $name,
+                                'rate' => $rate,
+                                'date_from' => $dateFrom,
+                                'date_to' => $dateTo,
+                                'locked' => $locked,
+                                'sync_status' => 'Synced',
+                                'sap_status' => 'Created',
+                            ]
+                        );
+                        $count++;
+                    }
+                }
             }
 
             return $this->respondWithSyncResult(true, "Synced {$count} Tax Codes from SAP successfully.");
@@ -376,7 +455,7 @@ class SapServiceLayerController extends Controller
     public function syncUoms()
     {
         try {
-            $result = $this->manager->fetchFromSap('UnitOfMeasurements?$select=Code,Name');
+            $result = $this->manager->fetchAllFromSap('UnitOfMeasurements?$select=AbsEntry,Code,Name');
             if (!$result['success']) {
                 return $this->respondWithSyncResult(false, 'Failed to sync UOMs: ' . $result['message']);
             }
@@ -390,6 +469,7 @@ class SapServiceLayerController extends Controller
                 Uom::updateOrCreate(
                     ['code' => $code],
                     [
+                        'abs_entry' => $data['AbsEntry'] ?? null,
                         'name' => $data['Name'] ?? $data['UomName'] ?? $code,
                         'sync_status' => 'Synced',
                         'sap_status' => 'Created',
@@ -410,7 +490,7 @@ class SapServiceLayerController extends Controller
     public function syncWarehouses()
     {
         try {
-            $result = $this->manager->fetchFromSap('Warehouses?$select=WarehouseCode,WarehouseName');
+            $result = $this->manager->fetchAllFromSap('Warehouses?$select=WarehouseCode,WarehouseName,EnableBinLocations');
             if (!$result['success']) {
                 return $this->respondWithSyncResult(false, 'Failed to sync Warehouses: ' . $result['message']);
             }
@@ -425,6 +505,7 @@ class SapServiceLayerController extends Controller
                     ['whs_code' => $code],
                     [
                         'whs_name' => $data['WarehouseName'] ?? $data['Name'] ?? $code,
+                        'bin_enabled' => ($data['EnableBinLocations'] ?? 'tNO') === 'tYES',
                         'sync_status' => 'Synced',
                         'sap_status' => 'Created',
                     ]
@@ -439,14 +520,80 @@ class SapServiceLayerController extends Controller
     }
 
     /**
+     * Sync Bin Locations from SAP.
+     */
+    public function syncBinLocations()
+    {
+        try {
+            $result = $this->manager->fetchAllFromSap('BinLocations?$select=AbsEntry,BinCode,Warehouse,Inactive');
+            if (!$result['success']) {
+                return $this->respondWithSyncResult(false, 'Failed to sync Bin Locations: ' . $result['message']);
+            }
+
+            $count = 0;
+            foreach ($result['data'] as $data) {
+                if (empty($data['AbsEntry'])) continue;
+                BinLocation::updateOrCreate(
+                    ['abs_entry' => $data['AbsEntry']],
+                    [
+                        'bin_code' => $data['BinCode'] ?? null,
+                        'whs_code' => $data['Warehouse'] ?? null,
+                        'is_active' => ($data['Inactive'] ?? 'tNO') === 'tNO',
+                        'sync_status' => 'Synced',
+                        'sap_status' => 'Created',
+                    ]
+                );
+                $count++;
+            }
+
+            return $this->respondWithSyncResult(true, "Synced {$count} Bin Locations from SAP successfully.");
+        } catch (\Throwable $e) {
+            return $this->respondWithSyncResult(false, 'Bin Locations sync error: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Sync UoM Groups from SAP.
+     */
+    public function syncUomGroups()
+    {
+        try {
+            $result = $this->manager->fetchAllFromSap('UnitOfMeasurementGroups?$select=AbsEntry,Code,Name,BaseUoM');
+            if (!$result['success']) {
+                return $this->respondWithSyncResult(false, 'Failed to sync UoM Groups: ' . $result['message']);
+            }
+
+            $count = 0;
+            foreach ($result['data'] as $data) {
+                if (empty($data['Code'])) continue;
+                UomGroup::updateOrCreate(
+                    ['group_code' => $data['Code']],
+                    [
+                        'abs_entry' => $data['AbsEntry'] ?? null,
+                        'group_name' => $data['Name'] ?? null,
+                        'base_uom' => $data['BaseUoM'] ?? null,
+                        'sync_status' => 'Synced',
+                        'sap_status' => 'Created',
+                    ]
+                );
+                $count++;
+            }
+
+            return $this->respondWithSyncResult(true, "Synced {$count} UoM Groups from SAP successfully.");
+        } catch (\Throwable $e) {
+            return $this->respondWithSyncResult(false, 'UoM Groups sync error: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Sync Withholding Taxes from SAP.
      */
     public function syncWithholdingTaxes()
     {
         try {
-            $result = $this->manager->fetchFromSap('WithholdingTaxCodes?$select=WTCode,WTName');
+            $result = $this->manager->fetchAllFromSap('WithholdingTaxCodes?$select=WTCode,WTName,Rate,Category,Account,Inactive');
             if (!$result['success']) {
-                $result = $this->manager->fetchFromSap('WithholdingTax?$select=WTCode,WTName');
+                $result = $this->manager->fetchAllFromSap('WithholdingTax?$select=WTCode,WTName,Rate,Category,Account,Inactive');
             }
 
             if (!$result['success']) {
@@ -467,6 +614,9 @@ class SapServiceLayerController extends Controller
                         'name' => $data['WTName'] ?? $data['Name'] ?? $code,
                         'wt_name' => $data['WTName'] ?? $data['Name'] ?? $code,
                         'rate' => $data['Rate'] ?? 0,
+                        'category' => $data['Category'] ?? null,
+                        'gl_account' => $data['Account'] ?? null,
+                        'inactive' => ($data['Inactive'] ?? 'tNO') === 'tYES',
                         'sync_status' => 'Synced',
                         'sap_status' => 'Created',
                     ]

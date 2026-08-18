@@ -62,6 +62,7 @@ class PurchaseOrderController extends Controller
         $chartOfAccounts = ChartOfAccount::where('is_active', true)->where('account_type', 'Postable')->get();
         $dimensions = Dimension::where('is_active', true)->orderBy('dimension_code')->get();
         $costCenters = CostCenter::where('is_active', true)->where('center_code', 'NOT ILIKE', 'Centr_z%')->orderBy('center_code')->get();
+        $items = \App\Models\Item::where('is_active', true)->orderBy('item_code')->get();
 
         $basePr = null;
         $prefilledData = null;
@@ -105,7 +106,7 @@ class PurchaseOrderController extends Controller
             }
         }
 
-        return view('purchase-order.create', compact('vendors', 'taxes', 'warehouses', 'uoms', 'chartOfAccounts', 'dimensions', 'costCenters', 'basePr', 'prefilledData'));
+        return view('purchase-order.create', compact('vendors', 'taxes', 'warehouses', 'uoms', 'chartOfAccounts', 'dimensions', 'costCenters', 'items', 'basePr', 'prefilledData'));
     }
 
     public function store(Request $request, SapService $sap)

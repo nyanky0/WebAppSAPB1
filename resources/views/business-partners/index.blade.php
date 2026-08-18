@@ -115,8 +115,13 @@
                                             @endif
                                         </td>
                                         <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
-                                            @if(!empty($bp->contact_persons))
-                                                {{ implode(', ', $bp->contact_persons) }}
+                                            @if(!empty($bp->contact_persons) && is_array($bp->contact_persons))
+                                                @php
+                                                    $names = array_filter(array_map(function($c) {
+                                                        return is_array($c) ? ($c['Name'] ?? null) : null;
+                                                    }, $bp->contact_persons));
+                                                @endphp
+                                                {{ !empty($names) ? implode(', ', $names) : '-' }}
                                             @else
                                                 -
                                             @endif

@@ -95,8 +95,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/sap/sync/item-groups', [\App\Http\Controllers\SapServiceLayerController::class, 'syncItemGroups'])->name('sap.sync.item-groups');
     Route::post('/sap/sync/taxes', [\App\Http\Controllers\SapServiceLayerController::class, 'syncTaxes'])->name('sap.sync.taxes');
     Route::post('/sap/sync/uoms', [\App\Http\Controllers\SapServiceLayerController::class, 'syncUoms'])->name('sap.sync.uoms');
+    Route::post('/sap/sync/uom-groups', [\App\Http\Controllers\SapServiceLayerController::class, 'syncUomGroups'])->name('sap.sync.uom-groups');
     Route::post('/sap/sync/warehouses', [\App\Http\Controllers\SapServiceLayerController::class, 'syncWarehouses'])->name('sap.sync.warehouses');
+    Route::post('/sap/sync/bin-locations', [\App\Http\Controllers\SapServiceLayerController::class, 'syncBinLocations'])->name('sap.sync.bin-locations');
     Route::post('/sap/sync/withholding-taxes', [\App\Http\Controllers\SapServiceLayerController::class, 'syncWithholdingTaxes'])->name('sap.sync.wtax');
+    Route::post('/sap/sync/bp-groups', [\App\Http\Controllers\SapServiceLayerController::class, 'syncBpGroups'])->name('sap.sync.bp-groups');
     Route::post('/sap/sync/period-indicators', [\App\Http\Controllers\SapServiceLayerController::class, 'syncPeriodIndicators'])->name('sap.sync.period-indicators');
 
     Route::get('/branches', [\App\Http\Controllers\BranchController::class, 'index'])->name('branches.index');

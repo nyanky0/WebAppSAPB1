@@ -58,10 +58,21 @@ class TaxController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'code' => 'required|string|max:50|unique:taxes,code',
+            'code' => 'required|string|max:50',
             'name' => 'required|string|max:255',
             'rate' => 'required|numeric|min:0|max:100',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
         ]);
+
+        // Check for duplicate code + date_from combination
+        $existing = Tax::where('code', $validated['code'])
+            ->where('date_from', $validated['date_from'] ?? null)
+            ->exists();
+        
+        if ($existing) {
+            return back()->with('error', 'A tax with this code and effective date already exists.')->withInput();
+        }
 
         DB::beginTransaction();
         try {
@@ -69,6 +80,8 @@ class TaxController extends Controller
                 'code' => $validated['code'],
                 'name' => $validated['name'],
                 'rate' => $validated['rate'],
+                'date_from' => $validated['date_from'] ?? null,
+                'date_to' => $validated['date_to'] ?? null,
                 'locked' => $request->has('locked'),
                 'sync_status' => 'Draft',
             ]);
@@ -96,15 +109,22 @@ class TaxController extends Controller
     public function pushToSap(Tax $tax, SapService $sap)
     {
         try {
+            $linePayload = [
+                'Rate' => $tax->rate
+            ];
+
+            if ($tax->date_from) {
+                $linePayload['DateFrom'] = $tax->date_from->format('Y-m-d');
+            }
+            if ($tax->date_to) {
+                $linePayload['DateTo'] = $tax->date_to->format('Y-m-d');
+            }
+
             $payload = [
                 'Code' => $tax->code,
                 'Name' => $tax->name,
                 'Inactive' => $tax->locked ? 'tYES' : 'tNO',
-                'VatGroups_Lines' => [
-                    [
-                        'Rate' => $tax->rate
-                    ]
-                ]
+                'VatGroups_Lines' => [$linePayload]
             ];
 
             $response = $sap->post(auth()->user(), 'VatGroups', $payload);

@@ -11,14 +11,17 @@
     tasks: [
         { name: 'Item Groups', route: '{{ route('sap.sync.item-groups') }}', status: 'pending', message: '' },
         { name: 'Items', route: '{{ route('sap.sync.items') }}', status: 'pending', message: '' },
+        { name: 'UoM Groups', route: '{{ route('sap.sync.uom-groups') }}', status: 'pending', message: '' },
         { name: 'Units of Measure', route: '{{ route('sap.sync.uoms') }}', status: 'pending', message: '' },
-        { name: 'Warehouses & Bins', route: '{{ route('sap.sync.warehouses') }}', status: 'pending', message: '' },
+        { name: 'Warehouses', route: '{{ route('sap.sync.warehouses') }}', status: 'pending', message: '' },
+        { name: 'Bin Locations', route: '{{ route('sap.sync.bin-locations') }}', status: 'pending', message: '' },
         { name: 'Chart of Accounts', route: '{{ route('sap.sync.coa') }}', status: 'pending', message: '' },
         { name: 'Dimensions', route: '{{ route('sap.sync.dimensions') }}', status: 'pending', message: '' },
         { name: 'Cost Centers', route: '{{ route('sap.sync.cost-centers') }}', status: 'pending', message: '' },
         { name: 'Taxes (VatGroups)', route: '{{ route('sap.sync.taxes') }}', status: 'pending', message: '' },
         { name: 'Withholding Taxes', route: '{{ route('sap.sync.wtax') }}', status: 'pending', message: '' },
         { name: 'Branches', route: '{{ route('sap.sync.branches') }}', status: 'pending', message: '' },
+        { name: 'BP Groups', route: '{{ route('sap.sync.bp-groups') }}', status: 'pending', message: '' },
         { name: 'Business Partners', route: '{{ route('sap.sync.bp') }}', status: 'pending', message: '' }
     ],
     get progressPercent() {
@@ -239,14 +242,14 @@
                         </button>
                     </div>
 
-                    <!-- Pitch-Black Log Container (Strict Height 108px = 6 lines * 18px line-height) -->
+                    <!-- Log Container (Strict Height max 6 lines via inline styles, light grey background) -->
                     <div id="sync-log-container" 
-                         class="font-mono text-[11px] leading-[18px] p-2.5 rounded-lg h-[118px] max-h-[118px] overflow-y-auto shadow-inner border border-slate-900"
-                         style="background-color: #020617 !important; color: #f8fafc !important;">
+                         class="font-mono text-[11px] leading-[18px] p-2.5 rounded-lg overflow-y-auto shadow-inner border border-gray-200"
+                         style="max-height: 128px; background-color: #f3f4f6 !important; color: #1f2937 !important;">
                         <template x-for="(log, lIdx) in logs" :key="lIdx">
                             <div class="leading-[18px] flex items-start space-x-1.5 shrink-0 py-0.5">
-                                <span class="text-slate-400 font-normal shrink-0" x-text="`[${log.time}]`"></span>
-                                <span class="text-slate-100 font-medium break-words" x-text="log.text"></span>
+                                <span class="text-gray-500 font-normal shrink-0" x-text="`[${log.time}]`"></span>
+                                <span class="text-gray-800 font-medium break-words" x-text="log.text"></span>
                             </div>
                         </template>
                     </div>

@@ -80,6 +80,7 @@
                                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Item Name</th>
                                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Foreign Name</th>
                                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">UOM</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">UoM Group</th>
                                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Item Group</th>
                                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Active</th>
                                     <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Sync Status</th>
@@ -95,7 +96,12 @@
                                         <td class="whitespace-nowrap px-3 py-4 text-sm">
                                             <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">{{ $item->uom ?: 'N/A' }}</span>
                                         </td>
-                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-600">{{ $item->item_group ?: '-' }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-600">
+                                            {{ $item->uomGroup?->group_name ?: $item->uom_group ?: '-' }}
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-600">
+                                            {{ $item->itemGroupRel?->group_name ?: $item->item_group ?: '-' }}
+                                        </td>
                                         <td class="whitespace-nowrap px-3 py-4 text-sm">
                                             @if($item->is_active)
                                                 <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Yes</span>

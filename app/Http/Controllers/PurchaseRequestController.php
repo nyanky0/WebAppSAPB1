@@ -54,8 +54,9 @@ class PurchaseRequestController extends Controller
         $chartOfAccounts = \App\Models\ChartOfAccount::where('is_active', true)->where('account_type', 'Postable')->get();
         $dimensions = \App\Models\Dimension::where('is_active', true)->orderBy('dimension_code')->get();
         $costCenters = \App\Models\CostCenter::where('is_active', true)->where('center_code', 'NOT ILIKE', 'Centr_z%')->orderBy('center_code')->get();
+        $items = \App\Models\Item::where('is_active', true)->orderBy('item_code')->get();
 
-        return view('purchase-request.create', compact('taxes', 'warehouses', 'uoms', 'chartOfAccounts', 'dimensions', 'costCenters'));
+        return view('purchase-request.create', compact('taxes', 'warehouses', 'uoms', 'chartOfAccounts', 'dimensions', 'costCenters', 'items'));
     }
 
     public function duplicate($id)
@@ -68,6 +69,7 @@ class PurchaseRequestController extends Controller
         $chartOfAccounts = \App\Models\ChartOfAccount::where('is_active', true)->where('account_type', 'Postable')->get();
         $dimensions = \App\Models\Dimension::where('is_active', true)->orderBy('dimension_code')->get();
         $costCenters = \App\Models\CostCenter::where('is_active', true)->where('center_code', 'NOT ILIKE', 'Centr_z%')->orderBy('center_code')->get();
+        $items = \App\Models\Item::where('is_active', true)->orderBy('item_code')->get();
 
         $prefilledData = [
             'doc_type' => $existing->doc_type ?? 'dssItem',
@@ -95,7 +97,7 @@ class PurchaseRequestController extends Controller
             })->toArray()
         ];
 
-        return view('purchase-request.create', compact('taxes', 'warehouses', 'uoms', 'chartOfAccounts', 'dimensions', 'costCenters', 'prefilledData'));
+        return view('purchase-request.create', compact('taxes', 'warehouses', 'uoms', 'chartOfAccounts', 'dimensions', 'costCenters', 'items', 'prefilledData'));
     }
 
     public function show($id)

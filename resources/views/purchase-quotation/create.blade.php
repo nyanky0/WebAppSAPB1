@@ -97,35 +97,40 @@
                                     <td class="py-3 pl-4 pr-2 text-xs font-mono text-gray-500" x-text="index + 1"></td>
                                     
                                     <td class="px-2 py-2">
-                                        <input type="text" :name="'lines['+index+'][item_code]'" x-model="line.item_code" placeholder="Item Code..." class="w-full rounded-md border-gray-300 text-xs font-mono focus:ring-indigo-500">
+                                        <select :name="'lines['+index+'][item_code]'" x-model="line.item_code" @change="updateItemDescription($event, index)" class="w-full rounded-md border-gray-300 text-sm py-2 font-mono focus:ring-indigo-500">
+                                            <option value="">-- Select Item --</option>
+                                            @foreach($items as $item)
+                                                <option value="{{ $item->item_code }}" data-name="{{ $item->item_name }}">{{ $item->item_code }} - {{ $item->item_name }}</option>
+                                            @endforeach
+                                        </select>
                                     </td>
 
                                     <td class="px-2 py-2">
-                                        <input type="text" :name="'lines['+index+'][item_description]'" x-model="line.item_description" placeholder="Description..." class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500">
+                                        <input type="text" :name="'lines['+index+'][item_description]'" x-model="line.item_description" placeholder="Description..." class="w-full rounded-md border-gray-300 text-sm py-2 focus:ring-indigo-500">
                                     </td>
 
                                     <td class="px-2 py-2">
-                                        <input type="number" step="any" :name="'lines['+index+'][required_qty]'" x-model="line.required_qty" class="w-full rounded-md border-gray-300 text-xs text-right focus:ring-indigo-500 bg-gray-50">
+                                        <input type="number" step="any" :name="'lines['+index+'][required_qty]'" x-model="line.required_qty" class="w-full rounded-md border-gray-300 text-sm py-2 text-right focus:ring-indigo-500 bg-gray-50">
                                     </td>
 
                                     <td class="px-2 py-2">
-                                        <input type="date" :name="'lines['+index+'][required_date]'" x-model="line.required_date" class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500 bg-gray-50">
+                                        <input type="date" :name="'lines['+index+'][required_date]'" x-model="line.required_date" class="w-full rounded-md border-gray-300 text-sm py-2 focus:ring-indigo-500 bg-gray-50">
                                     </td>
 
                                     <td class="px-2 py-2">
-                                        <input type="number" step="any" :name="'lines['+index+'][quoted_qty]'" x-model="line.quoted_qty" class="w-full rounded-md border-gray-300 text-xs text-right font-bold focus:ring-indigo-500">
+                                        <input type="number" step="any" :name="'lines['+index+'][quoted_qty]'" x-model="line.quoted_qty" class="w-full rounded-md border-gray-300 text-sm py-2 text-right font-bold focus:ring-indigo-500">
                                     </td>
 
                                     <td class="px-2 py-2">
-                                        <input type="date" :name="'lines['+index+'][quoted_date]'" x-model="line.quoted_date" class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500 font-semibold">
+                                        <input type="date" :name="'lines['+index+'][quoted_date]'" x-model="line.quoted_date" class="w-full rounded-md border-gray-300 text-sm py-2 focus:ring-indigo-500 font-semibold">
                                     </td>
 
                                     <td class="px-2 py-2">
-                                        <input type="number" step="any" :name="'lines['+index+'][unit_price]'" x-model="line.unit_price" class="w-full rounded-md border-gray-300 text-xs text-right font-mono focus:ring-indigo-500">
+                                        <input type="number" step="any" :name="'lines['+index+'][unit_price]'" x-model="line.unit_price" class="w-full rounded-md border-gray-300 text-sm py-2 text-right font-mono focus:ring-indigo-500">
                                     </td>
 
                                     <td class="px-2 py-2">
-                                        <select :name="'lines['+index+'][whs_code]'" x-model="line.whs_code" class="w-full rounded-md border-gray-300 text-xs focus:ring-indigo-500">
+                                        <select :name="'lines['+index+'][whs_code]'" x-model="line.whs_code" class="w-full rounded-md border-gray-300 text-sm py-2 focus:ring-indigo-500">
                                             <option value="">Select Warehouse</option>
                                             @foreach($warehouses as $wh)
                                                 <option value="{{ $wh->whs_code }}">{{ $wh->whs_code }} - {{ $wh->whs_name }}</option>
@@ -230,6 +235,13 @@
                         base_requisition_line_id: l.id
                     }));
                     this.showCopyModal = false;
+                },
+                updateItemDescription(event, index) {
+                    const selectedOption = event.target.options[event.target.selectedIndex];
+                    const itemName = selectedOption.getAttribute('data-name');
+                    if (itemName) {
+                        this.lines[index].item_description = itemName;
+                    }
                 }
             }
         }
