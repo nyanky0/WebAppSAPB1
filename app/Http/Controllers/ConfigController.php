@@ -26,6 +26,10 @@ class ConfigController extends Controller
         ]);
 
         $user = auth()->user();
+        $userPerms = $user?->role?->permissions ?? [];
+        $hasOfflineSavePerm = in_array('Administrator.OfflineSave', $userPerms) || $user?->role?->name === 'Super Admin';
+        $bypassTest = $request->boolean('bypass_test') && $hasOfflineSavePerm;
+
         $sapUser = $user?->sap_user ?? $user?->username ?? 'manager';
         $sapPassword = $user?->sap_password ?? 'P@ssw0rd';
 
@@ -36,40 +40,41 @@ class ConfigController extends Controller
         ];
         $jsonPreview = json_encode($sanitizedPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
-        // Perform SAP Service Layer connection & login test
-        $baseUrl = rtrim($request->base_url, '/');
-        $parsed = parse_url($baseUrl);
-        $hostHeader = 'localhost' . (isset($parsed['port']) ? ':' . $parsed['port'] : '');
-        $maxRetries = (int) ($request->max_retries ?? 3);
+        if (!$bypassTest) {
+            // Perform SAP Service Layer connection & login test
+            $baseUrl = rtrim($request->base_url, '/');
+            $parsed = parse_url($baseUrl);
+            $hostHeader = 'localhost' . (isset($parsed['port']) ? ':' . $parsed['port'] : '');
 
-        try {
-            $response = \Illuminate\Support\Facades\Http::withoutVerifying()
-                ->timeout(12)
-                ->withHeaders(['Host' => $hostHeader])
-                ->post("{$baseUrl}/Login", [
-                    'UserName' => $sapUser,
-                    'Password' => $sapPassword,
-                    'CompanyDB' => $request->database,
-                ]);
+            try {
+                $response = \Illuminate\Support\Facades\Http::withoutVerifying()
+                    ->timeout(12)
+                    ->withHeaders(['Host' => $hostHeader])
+                    ->post("{$baseUrl}/Login", [
+                        'UserName' => $sapUser,
+                        'Password' => $sapPassword,
+                        'CompanyDB' => $request->database,
+                    ]);
 
-            if (!$response->successful()) {
-                $errorDetail = $response->json('error.message.value') ?? $response->body();
-                $errorMsg = "<strong>❌ Test Connection Failed! (HTTP {$response->status()})</strong><br>"
-                          . "<span class='text-xs text-red-600 font-semibold'>" . e($errorDetail) . "</span><br><br>"
+                if (!$response->successful()) {
+                    $errorDetail = $response->json('error.message.value') ?? $response->body();
+                    $errorMsg = "<strong>❌ Test Connection Failed! (HTTP {$response->status()})</strong><br>"
+                              . "<span class='text-xs text-red-600 font-semibold'>" . e($errorDetail) . "</span><br><br>"
+                              . "<strong>Login Payload Sent:</strong>"
+                              . "<pre class='bg-gray-900 text-amber-400 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>"
+                              . "<span class='text-xs text-gray-500 mt-1 block'>Configuration was not saved. Please verify your SAP Service Layer URL, Database Name, and User credentials.</span>";
+
+                    return back()->withInput()->with('error', $errorMsg);
+                }
+            } catch (\Exception $e) {
+                $errorMsg = "<strong>❌ Test Connection Failed!</strong><br>"
+                          . "<span class='text-xs text-red-600 font-semibold'>" . e($e->getMessage()) . "</span><br><br>"
                           . "<strong>Login Payload Sent:</strong>"
                           . "<pre class='bg-gray-900 text-amber-400 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>"
-                          . "<span class='text-xs text-gray-500 mt-1 block'>Configuration was not saved. Please verify your SAP Service Layer URL, Database Name, and User credentials.</span>";
+                          . "<span class='text-xs text-gray-500 mt-1 block'>Configuration was not saved due to connection error.</span>";
 
                 return back()->withInput()->with('error', $errorMsg);
             }
-        } catch (\Exception $e) {
-            $errorMsg = "<strong>❌ Test Connection Failed!</strong><br>"
-                      . "<span class='text-xs text-red-600 font-semibold'>" . e($e->getMessage()) . "</span><br><br>"
-                      . "<strong>Login Payload Sent:</strong>"
-                      . "<pre class='bg-gray-900 text-amber-400 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>"
-                      . "<span class='text-xs text-gray-500 mt-1 block'>Configuration was not saved due to connection error.</span>";
-
-            return back()->withInput()->with('error', $errorMsg);
         }
 
         // Test Succeeded -> Proceed to Save
@@ -101,9 +106,15 @@ class ConfigController extends Controller
             'period_indicator' => $request->period_indicator
         ]);
 
-        $successMsg = "<strong>✅ Test Connection Successful & Configuration Saved!</strong><br>"
-                    . "<strong>Login Payload Verified:</strong>"
-                    . "<pre class='bg-gray-900 text-green-400 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>";
+        if ($bypassTest) {
+            $successMsg = "<strong>⚡ Configuration Saved in Offline Mode (Bypassed SAP Connection Test)!</strong><br>"
+                        . "<strong>Config Payload:</strong>"
+                        . "<pre class='bg-gray-900 text-purple-300 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>";
+        } else {
+            $successMsg = "<strong>✅ Test Connection Successful & Configuration Saved!</strong><br>"
+                        . "<strong>Login Payload Verified:</strong>"
+                        . "<pre class='bg-gray-900 text-green-400 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>";
+        }
 
         return back()->with('success', $successMsg);
     }

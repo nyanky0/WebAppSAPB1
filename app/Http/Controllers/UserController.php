@@ -29,10 +29,15 @@ class UserController extends Controller
             'role_id' => 'required|exists:roles,id'
         ]);
 
+        $authUser = auth()->user();
+        $userPerms = $authUser?->role?->permissions ?? [];
+        $hasOfflineSavePerm = in_array('Administrator.OfflineSave', $userPerms) || $authUser?->role?->name === 'Super Admin';
+        $bypassTest = $request->boolean('bypass_test') && $hasOfflineSavePerm;
+
         $sapUser = $request->sap_user;
         $sapPassword = $request->sap_password;
 
-        if ($sapUser) {
+        if ($sapUser && !$bypassTest) {
             $testResult = $this->testSapLogin($sapUser, $sapPassword);
             if ($testResult !== true) {
                 return $testResult; // Returns back with error message and sanitized JSON payload
@@ -59,9 +64,15 @@ class UserController extends Controller
         ];
         $jsonPreview = json_encode($sanitizedPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
-        $successMsg = "<strong>✅ User Created & SAP Connection Test Successful!</strong><br>"
-                    . "<strong>Login Payload Verified:</strong>"
-                    . "<pre class='bg-gray-900 text-green-400 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>";
+        if ($bypassTest) {
+            $successMsg = "<strong>⚡ User Created in Offline Mode (Bypassed SAP Connection Test)!</strong><br>"
+                        . "<strong>User Payload:</strong>"
+                        . "<pre class='bg-gray-900 text-purple-300 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>";
+        } else {
+            $successMsg = "<strong>✅ User Created & SAP Connection Test Successful!</strong><br>"
+                        . "<strong>Login Payload Verified:</strong>"
+                        . "<pre class='bg-gray-900 text-green-400 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>";
+        }
 
         return back()->with('success', $successMsg);
     }
@@ -77,10 +88,15 @@ class UserController extends Controller
             'role_id' => 'required|exists:roles,id'
         ]);
 
+        $authUser = auth()->user();
+        $userPerms = $authUser?->role?->permissions ?? [];
+        $hasOfflineSavePerm = in_array('Administrator.OfflineSave', $userPerms) || $authUser?->role?->name === 'Super Admin';
+        $bypassTest = $request->boolean('bypass_test') && $hasOfflineSavePerm;
+
         $sapUser = $request->sap_user;
         $sapPassword = $request->filled('sap_password') ? $request->sap_password : $user->sap_password;
 
-        if ($sapUser) {
+        if ($sapUser && !$bypassTest) {
             $testResult = $this->testSapLogin($sapUser, $sapPassword);
             if ($testResult !== true) {
                 return $testResult; // Returns back with error message and sanitized JSON payload
@@ -114,9 +130,15 @@ class UserController extends Controller
         ];
         $jsonPreview = json_encode($sanitizedPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
-        $successMsg = "<strong>✅ User Updated & SAP Connection Test Successful!</strong><br>"
-                    . "<strong>Login Payload Verified:</strong>"
-                    . "<pre class='bg-gray-900 text-green-400 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>";
+        if ($bypassTest) {
+            $successMsg = "<strong>⚡ User Updated in Offline Mode (Bypassed SAP Connection Test)!</strong><br>"
+                        . "<strong>User Payload:</strong>"
+                        . "<pre class='bg-gray-900 text-purple-300 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>";
+        } else {
+            $successMsg = "<strong>✅ User Updated & SAP Connection Test Successful!</strong><br>"
+                        . "<strong>Login Payload Verified:</strong>"
+                        . "<pre class='bg-gray-900 text-green-400 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>";
+        }
 
         return back()->with('success', $successMsg);
     }

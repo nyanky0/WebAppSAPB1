@@ -87,6 +87,22 @@
                                     </div>
                                     <p class="mt-2 text-xs text-gray-500">Number of automatic retries (default 3) when connection or 5xx server errors occur during SAP Service Layer communication.</p>
                                 </div>
+
+                                @php
+                                    $userPerms = auth()->user()?->role?->permissions ?? [];
+                                    $canOfflineSave = in_array('Administrator.OfflineSave', $userPerms) || auth()->user()?->role?->name === 'Super Admin';
+                                @endphp
+                                @if($canOfflineSave)
+                                <div class="sm:col-span-2 bg-purple-50/70 border border-purple-200 rounded-xl p-3.5 mt-1 transition-all">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" name="bypass_test" id="bypass_test" value="1" class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded">
+                                        <label for="bypass_test" class="ml-2.5 block text-sm font-semibold text-purple-900">
+                                            ⚡ Bypass SAP Connection Test (Offline Save)
+                                        </label>
+                                    </div>
+                                    <p class="mt-1 text-xs text-purple-700 ml-6">Super Admin Privilege: Force save configuration settings directly without validating connection against SAP Service Layer.</p>
+                                </div>
+                                @endif
                             </div>
 
                             @php

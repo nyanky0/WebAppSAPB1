@@ -113,6 +113,10 @@
                                                 <input type="checkbox" name="permissions[]" value="Administrator.Logs" id="perm_admin_logs" x-model="perms.admin_logs" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
                                                 <label for="perm_admin_logs" class="ml-2 block text-sm text-gray-700">System Logs</label>
                                             </div>
+                                            <div class="flex items-center">
+                                                <input type="checkbox" name="permissions[]" value="Administrator.OfflineSave" id="perm_admin_offline_save" x-model="perms.admin_offline_save" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                                <label for="perm_admin_offline_save" class="ml-2 block text-sm font-medium text-purple-700">Offline Save & Bypass SAP Connection Test</label>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -259,6 +263,7 @@
                     admin_roles: false,
                     admin_users: false,
                     admin_logs: false,
+                    admin_offline_save: false,
                     master_items: false,
                     master_uoms: false,
                     master_warehouses: false,
@@ -299,6 +304,7 @@
                     this.perms.admin_roles = list.includes('Administrator.Roles');
                     this.perms.admin_users = list.includes('Administrator.Users');
                     this.perms.admin_logs = list.includes('Administrator.Logs');
+                    this.perms.admin_offline_save = list.includes('Administrator.OfflineSave');
                     this.perms.master_items = list.includes('Administrator.Items');
                     this.perms.master_uoms = list.includes('Administrator.Uoms');
                     this.perms.master_warehouses = list.includes('Administrator.Warehouses');
@@ -331,6 +337,7 @@
                         admin_roles: false,
                         admin_users: false,
                         admin_logs: false,
+                        admin_offline_save: false,
                         master_items: false,
                         master_uoms: false,
                         master_warehouses: false,
@@ -353,13 +360,14 @@
                 },
 
                 get folderAdmin() {
-                    return this.perms.admin_config && this.perms.admin_roles && this.perms.admin_users && this.perms.admin_logs;
+                    return this.perms.admin_config && this.perms.admin_roles && this.perms.admin_users && this.perms.admin_logs && this.perms.admin_offline_save;
                 },
                 set folderAdmin(value) {
                     this.perms.admin_config = value;
                     this.perms.admin_roles = value;
                     this.perms.admin_users = value;
                     this.perms.admin_logs = value;
+                    this.perms.admin_offline_save = value;
                 },
 
                 get folderMaster() {

@@ -119,6 +119,22 @@
                                             <label class="block text-sm font-medium text-gray-700">SAP Password</label>
                                             <input type="password" name="sap_password" x-model="sap_password" class="mt-1 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-lg bg-white/60 transition-colors focus:bg-white">
                                         </div>
+
+                                        @php
+                                            $userPerms = auth()->user()?->role?->permissions ?? [];
+                                            $canOfflineSave = in_array('Administrator.OfflineSave', $userPerms) || auth()->user()?->role?->name === 'Super Admin';
+                                        @endphp
+                                        @if($canOfflineSave)
+                                        <div class="bg-purple-50/70 border border-purple-200 rounded-xl p-3 mt-2">
+                                            <div class="flex items-center">
+                                                <input type="checkbox" name="bypass_test" id="user_bypass_test" value="1" x-model="bypass_test" class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded">
+                                                <label for="user_bypass_test" class="ml-2 block text-xs font-semibold text-purple-900">
+                                                    ⚡ Bypass SAP Connection Test (Offline Save)
+                                                </label>
+                                            </div>
+                                            <p class="mt-1 text-[11px] text-purple-700 ml-6">Super Admin Privilege: Force save user without testing SAP login credentials.</p>
+                                        </div>
+                                        @endif
                                     </div>
                                 </div>
 
@@ -167,6 +183,7 @@
                 sap_user: '',
                 sap_password: '',
                 role_id: '',
+                bypass_test: false,
 
                 openAddModal() {
                     this.editMode = false;
@@ -176,6 +193,7 @@
                     this.sap_user = '';
                     this.sap_password = '';
                     this.role_id = '';
+                    this.bypass_test = false;
                     this.formAction = '{{ route("users.store") }}';
                     this.showModal = true;
                 },
@@ -188,6 +206,7 @@
                     this.sap_user = user.sap_user || '';
                     this.sap_password = '';
                     this.role_id = user.role_id || '';
+                    this.bypass_test = false;
                     this.formAction = '/users/' + user.uid7;
                     this.showModal = true;
                 },
@@ -195,6 +214,7 @@
                 closeModal() {
                     this.showModal = false;
                     this.isSubmitting = false;
+                    this.bypass_test = false;
                 }
             }));
         });
