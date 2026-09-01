@@ -25,6 +25,54 @@ class ConfigController extends Controller
             'max_retries' => 'nullable|integer|min:1|max:10',
         ]);
 
+        $user = auth()->user();
+        $sapUser = $user?->sap_user ?? $user?->username ?? 'manager';
+        $sapPassword = $user?->sap_password ?? 'P@ssw0rd';
+
+        // Sanitized JSON payload (company + user tanpa password)
+        $sanitizedPayload = [
+            'CompanyDB' => $request->database,
+            'UserName' => $sapUser,
+        ];
+        $jsonPreview = json_encode($sanitizedPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+        // Perform SAP Service Layer connection & login test
+        $baseUrl = rtrim($request->base_url, '/');
+        $parsed = parse_url($baseUrl);
+        $hostHeader = 'localhost' . (isset($parsed['port']) ? ':' . $parsed['port'] : '');
+        $maxRetries = (int) ($request->max_retries ?? 3);
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::withoutVerifying()
+                ->timeout(12)
+                ->withHeaders(['Host' => $hostHeader])
+                ->post("{$baseUrl}/Login", [
+                    'UserName' => $sapUser,
+                    'Password' => $sapPassword,
+                    'CompanyDB' => $request->database,
+                ]);
+
+            if (!$response->successful()) {
+                $errorDetail = $response->json('error.message.value') ?? $response->body();
+                $errorMsg = "<strong>❌ Test Connection Failed! (HTTP {$response->status()})</strong><br>"
+                          . "<span class='text-xs text-red-600 font-semibold'>" . e($errorDetail) . "</span><br><br>"
+                          . "<strong>Login Payload Sent:</strong>"
+                          . "<pre class='bg-gray-900 text-amber-400 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>"
+                          . "<span class='text-xs text-gray-500 mt-1 block'>Configuration was not saved. Please verify your SAP Service Layer URL, Database Name, and User credentials.</span>";
+
+                return back()->withInput()->with('error', $errorMsg);
+            }
+        } catch (\Exception $e) {
+            $errorMsg = "<strong>❌ Test Connection Failed!</strong><br>"
+                      . "<span class='text-xs text-red-600 font-semibold'>" . e($e->getMessage()) . "</span><br><br>"
+                      . "<strong>Login Payload Sent:</strong>"
+                      . "<pre class='bg-gray-900 text-amber-400 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>"
+                      . "<span class='text-xs text-gray-500 mt-1 block'>Configuration was not saved due to connection error.</span>";
+
+            return back()->withInput()->with('error', $errorMsg);
+        }
+
+        // Test Succeeded -> Proceed to Save
         $config = Config::first() ?? new Config();
         $oldDatabase = $config->database;
 
@@ -33,6 +81,11 @@ class ConfigController extends Controller
         $config->max_retries = $request->filled('max_retries') ? (int) $request->max_retries : 3;
         $config->scheduler_active = $request->has('scheduler_active');
         $config->save();
+
+        // Clear existing session cache for SAP session
+        if ($user) {
+            \Illuminate\Support\Facades\Cache::forget('sap_session_' . ($user->uid7 ?? $user->id));
+        }
 
         if ($oldDatabase && $oldDatabase !== $request->database) {
             \App\Models\Item::where('sync_status', '!=', 'Draft')->delete();
@@ -48,7 +101,11 @@ class ConfigController extends Controller
             'period_indicator' => $request->period_indicator
         ]);
 
-        return back()->with('success', 'Configuration updated successfully.');
+        $successMsg = "<strong>✅ Test Connection Successful & Configuration Saved!</strong><br>"
+                    . "<strong>Login Payload Verified:</strong>"
+                    . "<pre class='bg-gray-900 text-green-400 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>";
+
+        return back()->with('success', $successMsg);
     }
 
     public function updatePersonal(Request $request)

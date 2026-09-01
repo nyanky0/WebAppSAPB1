@@ -1,6 +1,6 @@
 <div x-data="flashMessages()" 
      @flash-message.window="addMessage($event.detail)"
-     class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[200] flex flex-col items-center pointer-events-none w-full max-w-sm space-y-4">
+     class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[200] flex flex-col items-center pointer-events-none w-full max-w-md px-4 space-y-4">
     
     <template x-for="message in messages" :key="message.id">
         <div x-show="message.show"
@@ -10,7 +10,7 @@
              x-transition:leave="transition ease-in duration-200 transform"
              x-transition:leave-start="opacity-100 scale-100 translate-y-0"
              x-transition:leave-end="opacity-0 scale-90 -translate-y-4"
-             class="pointer-events-auto w-full bg-white/80 backdrop-blur-xl border border-white/50 shadow-2xl rounded-2xl p-6 flex flex-col items-center text-center relative overflow-hidden">
+             class="pointer-events-auto w-full bg-white/90 backdrop-blur-xl border border-white/60 shadow-2xl rounded-2xl p-6 flex flex-col items-center text-center relative overflow-hidden">
              
             <!-- Background glow -->
             <div class="absolute inset-0 opacity-20 pointer-events-none z-0" :class="{
@@ -31,7 +31,7 @@
 
             <!-- Content -->
             <h3 class="text-xl font-bold text-gray-800 mb-2 relative z-10" x-text="message.type === 'success' ? 'Success!' : 'Error!'"></h3>
-            <p class="text-sm font-medium text-gray-600 relative z-10" x-html="message.text"></p>
+            <div class="text-sm font-medium text-gray-600 relative z-10 w-full text-left" x-html="message.text"></div>
             
             <!-- Close Button -->
             <button @click="removeMessage(message.id)" class="relative z-10 mt-6 px-6 py-2 bg-gray-900 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2">
@@ -49,7 +49,12 @@
             init() {
                 // Intercept Laravel session successes
                 @if(session('success'))
-                    this.addMessage({ type: 'success', message: '{{ session('success') }}' });
+                    this.addMessage({ type: 'success', message: {!! json_encode(session('success')) !!} });
+                @endif
+
+                // Intercept Laravel session errors
+                @if(session('error'))
+                    this.addMessage({ type: 'error', message: {!! json_encode(session('error')) !!} });
                 @endif
                 
                 // Intercept Laravel validation errors

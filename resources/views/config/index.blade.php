@@ -18,6 +18,7 @@
                          database: '{{ old('database', $config->database) }}',
                          periodIndicator: '{{ old('period_indicator', $config->period_indicator) }}',
                          maxRetries: '{{ old('max_retries', $config->max_retries ?? 3) }}',
+                         isSubmitting: false,
 
                          get isDirty() {
                              return (this.baseUrl ?? '').trim() !== (this.initialBaseUrl ?? '').trim() ||
@@ -47,7 +48,7 @@
                      @indicator-selected.window="periodIndicator = $event.detail"
                      @database-selected.window="database = $event.detail">
                     <div class="p-6">
-                        <form method="POST" action="{{ route('config.update') }}">
+                        <form method="POST" action="{{ route('config.update') }}" @submit="isSubmitting = true">
                             @csrf
                             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                 <!-- Base URL -->
@@ -116,16 +117,20 @@
                                 </div>
 
                                 <button type="submit" 
-                                        :disabled="!isDirty"
+                                        :disabled="!isDirty || isSubmitting"
                                         :title="!isDirty ? 'No changes detected in configuration settings.' : 'Save Configuration'"
-                                        :class="!isDirty 
+                                        :class="!isDirty || isSubmitting 
                                             ? 'border border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed shadow-none' 
                                             : 'border border-transparent text-white bg-indigo-600 hover:bg-indigo-500 hover:shadow-lg transform hover:-translate-y-0.5 active:scale-95 cursor-pointer shadow-md'"
                                         class="inline-flex items-center space-x-2 py-2.5 px-6 text-sm font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    <svg x-show="!isDirty" class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg x-show="!isDirty && !isSubmitting" class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                     </svg>
-                                    <span>Save Configuration</span>
+                                    <svg x-show="isSubmitting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                    </svg>
+                                    <span x-text="isSubmitting ? 'Testing & Saving...' : 'Save Configuration'"></span>
                                 </button>
                             </div>
                         </form>

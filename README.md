@@ -100,3 +100,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-08-18 17:11**: Fix UI for Document Creation, update Sync Logic for Item Groups and Branches
 - **2026-09-01 17:25**: fix: resolve login interactivity, fix Blade value binding syntax, restore original Tailwind v4 styling, and add microservices Docker config (PHP-FPM, Nginx, Redis)
 - **2026-09-01 17:24**: fix: resolve login interactivity, fix Blade value binding syntax, restore original Tailwind v4 styling, and add microservices Docker config (PHP-FPM, Nginx, Redis)
+- **2026-09-01 17:27**: chore: set frontend container to dev profile to guarantee production assets serve on startup
