@@ -135,10 +135,17 @@
                         </div>
 
                         <div class="bg-gray-50/80 px-6 py-4 sm:flex sm:flex-row-reverse rounded-b-xl border-t border-gray-200/50">
-                            <button type="submit" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-semibold text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
-                                Save User
+                            <button type="submit" 
+                                    :disabled="isSubmitting"
+                                    :class="isSubmitting ? 'opacity-60 cursor-not-allowed' : 'hover:bg-indigo-500 hover:shadow-lg transform hover:-translate-y-0.5 active:scale-95 cursor-pointer'"
+                                    class="w-full inline-flex items-center justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-semibold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm transition-all">
+                                <svg x-show="isSubmitting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                </svg>
+                                <span x-text="isSubmitting ? 'Testing & Saving...' : 'Save User'"></span>
                             </button>
-                            <button type="button" @click="closeModal()" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            <button type="button" @click="closeModal()" :disabled="isSubmitting" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                                 Cancel
                             </button>
                         </div>
@@ -153,6 +160,7 @@
             Alpine.data('userModal', () => ({
                 showModal: false,
                 editMode: false,
+                isSubmitting: false,
                 formAction: '{{ route("users.store") }}',
                 name: '',
                 username: '',
@@ -162,6 +170,7 @@
 
                 openAddModal() {
                     this.editMode = false;
+                    this.isSubmitting = false;
                     this.name = '';
                     this.username = '';
                     this.sap_user = '';
@@ -173,10 +182,11 @@
 
                 openEditModal(user) {
                     this.editMode = true;
+                    this.isSubmitting = false;
                     this.name = user.name || '';
                     this.username = user.username || '';
                     this.sap_user = user.sap_user || '';
-                    this.sap_password = user.sap_password || '';
+                    this.sap_password = '';
                     this.role_id = user.role_id || '';
                     this.formAction = '/users/' + user.uid7;
                     this.showModal = true;
@@ -184,6 +194,7 @@
 
                 closeModal() {
                     this.showModal = false;
+                    this.isSubmitting = false;
                 }
             }));
         });

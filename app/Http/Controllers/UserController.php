@@ -29,6 +29,16 @@ class UserController extends Controller
             'role_id' => 'required|exists:roles,id'
         ]);
 
+        $sapUser = $request->sap_user;
+        $sapPassword = $request->sap_password;
+
+        if ($sapUser) {
+            $testResult = $this->testSapLogin($sapUser, $sapPassword);
+            if ($testResult !== true) {
+                return $testResult; // Returns back with error message and sanitized JSON payload
+            }
+        }
+
         User::create([
             'name' => $request->name,
             'username' => $request->username,
@@ -42,7 +52,18 @@ class UserController extends Controller
 
         SystemLog::logAction('admin', 'Created User', "User {$request->username} created.");
 
-        return back()->with('success', 'User created successfully.');
+        $config = \App\Models\Config::first();
+        $sanitizedPayload = [
+            'CompanyDB' => $config?->database ?? 'N/A',
+            'UserName' => $sapUser ?? $request->username,
+        ];
+        $jsonPreview = json_encode($sanitizedPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+        $successMsg = "<strong>✅ User Created & SAP Connection Test Successful!</strong><br>"
+                    . "<strong>Login Payload Verified:</strong>"
+                    . "<pre class='bg-gray-900 text-green-400 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>";
+
+        return back()->with('success', $successMsg);
     }
 
     public function update(Request $request, User $user)
@@ -56,11 +77,21 @@ class UserController extends Controller
             'role_id' => 'required|exists:roles,id'
         ]);
 
+        $sapUser = $request->sap_user;
+        $sapPassword = $request->filled('sap_password') ? $request->sap_password : $user->sap_password;
+
+        if ($sapUser) {
+            $testResult = $this->testSapLogin($sapUser, $sapPassword);
+            if ($testResult !== true) {
+                return $testResult; // Returns back with error message and sanitized JSON payload
+            }
+        }
+
         $data = [
             'name' => $request->name,
             'username' => $request->username,
             'sap_user' => $request->sap_user,
-            'sap_password' => $request->sap_password,
+            'sap_password' => $request->sap_password ?? $user->sap_password,
             'role_id' => $request->role_id,
             'updated_by' => auth()->id(),
         ];
@@ -71,9 +102,75 @@ class UserController extends Controller
 
         $user->update($data);
         
+        // Clear cached SAP session for this user
+        \Illuminate\Support\Facades\Cache::forget('sap_session_' . $user->uid7);
+
         SystemLog::logAction('admin', 'Updated User', "User {$user->username} updated.");
 
-        return back()->with('success', 'User updated successfully.');
+        $config = \App\Models\Config::first();
+        $sanitizedPayload = [
+            'CompanyDB' => $config?->database ?? 'N/A',
+            'UserName' => $sapUser ?? $user->username,
+        ];
+        $jsonPreview = json_encode($sanitizedPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+        $successMsg = "<strong>✅ User Updated & SAP Connection Test Successful!</strong><br>"
+                    . "<strong>Login Payload Verified:</strong>"
+                    . "<pre class='bg-gray-900 text-green-400 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>";
+
+        return back()->with('success', $successMsg);
+    }
+
+    protected function testSapLogin($sapUser, $sapPassword)
+    {
+        $config = \App\Models\Config::first();
+        if (!$config || empty($config->base_url) || empty($config->database)) {
+            $errorMsg = "<strong>❌ SAP Service Layer Configuration Missing!</strong><br>"
+                      . "<span class='text-xs text-red-600 font-semibold'>Please configure Service Layer Base URL and Database in System Configuration first.</span>";
+            return back()->withInput()->with('error', $errorMsg);
+        }
+
+        $sanitizedPayload = [
+            'CompanyDB' => $config->database,
+            'UserName' => $sapUser,
+        ];
+        $jsonPreview = json_encode($sanitizedPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+        $baseUrl = rtrim($config->base_url, '/');
+        $parsed = parse_url($baseUrl);
+        $hostHeader = 'localhost' . (isset($parsed['port']) ? ':' . $parsed['port'] : '');
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::withoutVerifying()
+                ->timeout(12)
+                ->withHeaders(['Host' => $hostHeader])
+                ->post("{$baseUrl}/Login", [
+                    'UserName' => $sapUser,
+                    'Password' => $sapPassword,
+                    'CompanyDB' => $config->database,
+                ]);
+
+            if (!$response->successful()) {
+                $errorDetail = $response->json('error.message.value') ?? $response->body();
+                $errorMsg = "<strong>❌ SAP User Connection Test Failed! (HTTP {$response->status()})</strong><br>"
+                          . "<span class='text-xs text-red-600 font-semibold'>" . e($errorDetail) . "</span><br><br>"
+                          . "<strong>Login Payload Sent:</strong>"
+                          . "<pre class='bg-gray-900 text-amber-400 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>"
+                          . "<span class='text-xs text-gray-500 mt-1 block'>User was not saved. Please verify that SAP Username, Password, and Database ({$config->database}) permissions match.</span>";
+
+                return back()->withInput()->with('error', $errorMsg);
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            $errorMsg = "<strong>❌ SAP User Connection Test Failed!</strong><br>"
+                      . "<span class='text-xs text-red-600 font-semibold'>" . e($e->getMessage()) . "</span><br><br>"
+                      . "<strong>Login Payload Sent:</strong>"
+                      . "<pre class='bg-gray-900 text-amber-400 p-3 rounded-lg text-xs mt-1 text-left overflow-x-auto font-mono'>{$jsonPreview}</pre>"
+                      . "<span class='text-xs text-gray-500 mt-1 block'>User was not saved due to network / connection error.</span>";
+
+            return back()->withInput()->with('error', $errorMsg);
+        }
     }
 
     public function destroy(User $user)

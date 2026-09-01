@@ -101,3 +101,4 @@ A modern, highly-responsive web application built with Laravel 11, Tailwind CSS 
 - **2026-09-01 17:25**: fix: resolve login interactivity, fix Blade value binding syntax, restore original Tailwind v4 styling, and add microservices Docker config (PHP-FPM, Nginx, Redis)
 - **2026-09-01 17:24**: fix: resolve login interactivity, fix Blade value binding syntax, restore original Tailwind v4 styling, and add microservices Docker config (PHP-FPM, Nginx, Redis)
 - **2026-09-01 17:27**: chore: set frontend container to dev profile to guarantee production assets serve on startup
+- **2026-09-01 17:32**: feat: test SAP Service Layer login API before saving configuration, block save on failure, and display sanitized JSON payload (CompanyDB + UserName)
