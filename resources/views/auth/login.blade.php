@@ -16,7 +16,7 @@
         <!-- Username -->
         <div>
             <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-            <input id="username" class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" type="text" name="username" :value="old('username')" required autofocus autocomplete="username" />
+            <input id="username" class="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" type="text" name="username" value="{{ old('username') }}" required autofocus autocomplete="username" />
         </div>
 
         <!-- Password -->
